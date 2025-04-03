@@ -1,0 +1,238 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+.custom-gradient {
+    background: linear-gradient(85deg, #8ec5fc 0%, #e0c3fc 100%);
+}
+
+.moving-text {
+    overflow-x: hidden;
+    white-space: nowrap;
+    display: flex;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.moving-text::-webkit-scrollbar {
+    display: none;
+}
+
+.con {
+    white-space: nowrap;
+    display: inline-block;
+    animation-name: move;
+    animation-duration: 10s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+.moving-text h1 {
+    display: inline-block;
+}
+
+.gola {
+    height: 25px;
+    width: 25px;
+    border-radius: 50%;
+    display: inline-block;
+    background-color: #FE320A;
+    margin: 1vh 1vw;
+}
+
+@keyframes move {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-100%);
+    }
+}
+
+.radio {
+    display: none;
+}
+
+.label {
+    padding: 6px 16px;
+    box-shadow: 0px 4px 10px rgba(0, 86, 179, 0.1);
+    background: #f4f4f447;
+    color: #333;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    border: 2px solid transparent;
+    display: inline-block;
+    text-align: center;
+    min-width: 80px;
+}
+
+.label:hover {
+    background: #e0e0e0;
+}
+
+.radio:checked+.label {
+    background: #0056b3;
+    color: white;
+    border-color: #0056b3;
+    box-shadow: 0px 4px 10px rgba(0, 86, 179, 0.3);
+}
+
+#pg_loader {
+    font-size: 4vw;
+    font-family: sans-serif;
+    color: transparent;
+    background: #101828;
+    -webkit-background-clip: text;
+    position: absolute;
+    opacity: 0;
+    animation-name: load;
+    animation-duration: 1s;
+    animation-delay: 600ms;
+    animation-timing-function: linear;
+    transition: ease-in-out 1s;
+}
+
+#loader {
+    overflow: hidden;
+    white-space: nowrap;
+    display: flex;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    height: 100vh;
+    /* Ensure it fits the viewport */
+}
+
+#loader::-webkit-scrollbar {
+    display: none;
+}
+
+#loader h1 {
+    font-size: 4vw;
+    font-family: sans-serif;
+    color: transparent;
+    background: linear-gradient(to right, rgb(47, 47, 255), rgb(255, 180, 255));
+    -webkit-background-clip: text;
+    position: relative;
+    /* Changed from absolute to relative to prevent overflow */
+    opacity: 0;
+    animation-name: load;
+    animation-duration: 1s;
+    animation-delay: 1s;
+    animation-timing-function: linear;
+    transition: ease-in-out 1s;
+    line-height: 1.2;
+    /* Prevent excessive vertical spacing */
+}
+
+#loader h1:nth-child(2) {
+    animation-delay: 2s;
+}
+
+#loader h1:nth-child(3) {
+    animation-delay: 3s;
+}
+
+@keyframes load {
+    0% {
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+
+#loader_c {
+    overflow: hidden;
+    white-space: nowrap;
+    display: flex;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    height: 100vh;
+}
+
+#loader_c::-webkit-scrollbar {
+    display: none;
+}
+
+#loader_c h1 {
+    font-size: 4vw;
+    font-family: sans-serif;
+    color: transparent;
+    background: linear-gradient(to right, rgb(47, 47, 255), rgb(255, 180, 255));
+    -webkit-background-clip: text;
+    background-clip: text;
+    position: relative;
+    opacity: 0;
+    animation-name: load_c;
+    animation-duration: 2s;
+    animation-delay: 1s;
+    animation-timing-function: linear;
+    transition: ease-in-out 2s;
+    line-height: 1.2;
+}
+
+#loader_c h1:nth-child(2) {
+    animation-delay: 3s;
+}
+
+#loader_c h1:nth-child(3) {
+    animation-delay: 5s;
+}
+
+@keyframes load_c {
+    0% {
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@media (max-width: 600px) {
+
+    #loader h1,
+    #loader_c h1 {
+        font-size: 9vw;
+    }
+}
+
+.logo-glow {
+    filter: drop-shadow(0px 0px 10px rgba(255, 255, 255, 0.8));
+    transition: transform 0.3s ease-in-out, filter 0.3s ease-in-out;
+}
+
+.logo-glow:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0px 0px 15px rgba(255, 255, 255, 1));
+}
+
+

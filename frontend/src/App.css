@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+.custom-gradient {
+    background: linear-gradient(85deg, #8ec5fc 0%, #e0c3fc 100%);
+}
+
+.moving-text {
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.moving-text::-webkit-scrollbar {
+    display: none;
+}
+
+.con {
+    white-space: nowrap;
+    display: inline-block;
+    animation-name: move;
+    animation-duration: 10s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+.moving-text h1 {
+    font-size: 15vw;
+    display: inline-block;
+}
+
+.gola {
+    height: 25px;
+    width: 25px;
+    border-radius: 50%;
+    display: inline-block;
+    background-color: #FE320A;
+    margin: 2vw 2vw;
+}
+
+@keyframes move {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-100%);
+    }
+}
+
