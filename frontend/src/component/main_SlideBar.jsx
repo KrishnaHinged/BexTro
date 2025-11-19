@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FaHome, FaBell, FaComment, FaUser, FaCog } from "react-icons/fa";
+import { FaHome, FaBell, FaComment, FaChartPie, FaCog, FaCalendarAlt } from "react-icons/fa";
 
 const MainSlideBar = () => {
   const navigate = useNavigate();
@@ -9,9 +9,10 @@ const MainSlideBar = () => {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: <FaHome size={24} />, path: "/dashboard" },
-    { id: "chat", label: "Chat", icon: <FaComment size={24} />, path: "/chats" }, 
-    { id: "notifications", label: "Notifications", icon: <FaBell size={24} />, path: "/notifications" },
-    { id: "self_challenges", label: "Self Challenges", icon: <FaUser size={24} />, path: "/self_challenges" }, 
+    { id: "chat", label: "Chat", icon: <FaComment size={24} />, path: "/chats" },
+    // { id: "events", label: "Events", icon: <FaCalendarAlt size={24} />, path: "/events" }, // New
+    // { id: "notifications", label: "Notifications", icon: <FaBell size={24} />, path: "/notifications" },
+    { id: "self_challenges", label: "Self Challenges", icon: <FaChartPie size={24} />, path: "/self_challenges" },
     { id: "settings", label: "Settings", icon: <FaCog size={24} />, path: "/settings" },
   ];
 
@@ -34,7 +35,9 @@ const MainSlideBar = () => {
               navigate(path);
             }}
             className={`transition-all duration-300 rounded-lg p-3 ${
-              active === id ? "bg-gray-900 text-white scale-100 shadow-lg" : "text-gray-600 hover:text-gray-900 hover:scale-105"
+              active === id
+                ? "bg-gray-900 text-white scale-100 shadow-lg"
+                : "text-gray-600 hover:text-gray-900 hover:scale-105"
             }`}
             title={label}
             aria-label={label}

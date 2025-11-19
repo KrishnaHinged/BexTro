@@ -5,11 +5,11 @@ import { toast } from "react-hot-toast";
 import { setAuthUser, addFeedback } from "../../redux/userSclice"; // Import addFeedback
 import MainSlideBar from "../component/main_SlideBar.jsx";
 import PageLoader from "../component/pagesLoader.jsx";
-import Score from "../component/score.jsx";
-import ChallengeList from "../component/ChallengeList.jsx";
-import SkippedChallenges from "../component/SkippedChallenges.jsx";
-import ShareButton from "../component/ShareButton.jsx";
-import FeedbackModal from "../component/FeedbackModal.jsx";
+import Score from "../component/challenge_tab/score.jsx";
+import ChallengeList from "../component/challenge_tab/ChallengeList.jsx";
+import SkippedChallenges from "../component/challenge_tab/SkippedChallenges.jsx";
+import ShareButton from "../component/challenge_tab/ShareButton.jsx";
+import FeedbackModal from "../component/challenge_tab/FeedbackModal.jsx";
 
 const FeedbackCard = ({ feedback, userName, timestamp, challengeText }) => {
   return (

@@ -10,27 +10,38 @@ const useGetOtherUsers = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+  
     const fetchOtherUsers = async () => {
-      if (!isAuthenticated) return; // Skip fetching if not authenticated
-
+      if (!isAuthenticated) return;
+  
       setLoading(true);
       setError(null);
       try {
         axios.defaults.withCredentials = true;
-        const res = await axios.get('http://localhost:5005/api/v1/user/users');
-        // console.log('Other users:', res.data);
+        const res = await axios.get(
+          'http://localhost:5005/api/v1/user/users',
+          { signal: controller.signal }
+        );
         dispatch(setOtherUser(res.data));
       } catch (error) {
-        console.error('Error fetching other users:', error);
-        setError(error.response?.data?.message || 'Failed to fetch other users');
+        if (axios.isCancel(error)) {
+          console.log('Request cancelled', error.message);
+        } else {
+          console.error('Error fetching other users:', error);
+          setError(error.response?.data?.message || 'Failed to fetch other users');
+        }
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchOtherUsers();
-  }, [dispatch, isAuthenticated]); // Add isAuthenticated as a dependency
-
+  
+    return () => controller.abort(); // Cleanup
+  
+  }, [dispatch, isAuthenticated]);
+  
   return { loading, error };
 };
 

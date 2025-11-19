@@ -10,7 +10,7 @@ import {
   REGISTER,
 } from "redux-persist";
 import storage from "redux-persist/lib/storage";
-import userReducer from "./userSclice.js";  // Fixed typo from userSclice.js
+import userReducer from "./userSclice.js";  
 import messageReducer from "./messageSlice.js";
 import socketReducer from "./socketSlice.js";
 

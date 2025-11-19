@@ -236,3 +236,23 @@ body {
 }
 
 
+
+.gooey
+{
+    animation-name: gooey;
+    animation-duration: 6s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+    animation-timing-function: ease-in-out;
+}
+@keyframes gooey {
+    from {
+        /* filter: blur(20px); */
+        transform: translate(10%, -10%) skew(0);
+    }
+
+    to {
+        /* filter: blur(30px); */
+        transform: translate(-10%, 10%) skew(-25deg);
+    }
+}

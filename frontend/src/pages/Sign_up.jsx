@@ -57,7 +57,7 @@ const SignUp = () => {
 
   return (
     <div className="flex justify-center items-center h-screen">
-      <div className="bg-white/60 p-8 rounded-4xl shadow-lg border border-white h-130 w-96">
+      <div className="bg-white/60 p-8 rounded-4xl shadow-lg border border-white h-130 w-96 ">
         <h2 className="text-2xl font-bold mb-4 text-center">Sign Up</h2>
 
         {/* Show error or success message */}

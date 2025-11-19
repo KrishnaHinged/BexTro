@@ -5,12 +5,12 @@ import { toast } from "react-hot-toast";
 import { logoutUser } from "../../redux/userSclice.js";
 import MainSlideBar from "../component/main_SlideBar.jsx";
 import PageLoader from "../component/pagesLoader.jsx";
-import ProfileTab from "../component/ProfileTab.jsx";
-import InterestsTab from "../component/InterestsTab.jsx";
-import BucketListTab from "../component/BucketListTab.jsx";
-import ChallengesTab from "../component/ChallengesTab.jsx";
+import ProfileTab from "../component/setting_tab/ProfileTab.jsx";
+import InterestsTab from "../component/setting_tab/InterestsTab.jsx";
+import BucketListTab from "../component/setting_tab/BucketListTab.jsx";
+import ChallengesTab from "../component/setting_tab/ChallengesTab.jsx";
 
-const Settings = ({ toggleTheme, isDarkMode }) => {
+const Settings = ({ toggleTheme, currentTheme }) => {
   const [step, setStep] = useState(1);
   const [activeTab, setActiveTab] = useState("profile");
   const dispatch = useDispatch();
@@ -47,7 +47,7 @@ const Settings = ({ toggleTheme, isDarkMode }) => {
       {step === 2 && (
         <>
           <MainSlideBar />
-          <div className="flex-1  p-8">
+          <div className="flex-1 p-8">
             <div className="flex justify-between items-center mb-8">
               <h1 className="text-4xl font-extrabold text-white/80 tracking-tight">
                 Settings
@@ -56,23 +56,29 @@ const Settings = ({ toggleTheme, isDarkMode }) => {
                 className="bg-white/85 p-2 rounded-full border border-white cursor-pointer"
                 onClick={toggleTheme}
               >
-                <img
-                  src={isDarkMode ? "/light.svg" : "/dark.svg"}
-                  alt="Theme Toggle"
-                  className="w-6 h-6"
-                />
+                {typeof currentTheme.navbarIcon === "string" ? (
+                  <img
+                    src={currentTheme.navbarIcon}
+                    alt="Theme Toggle"
+                    className="w-6 h-6"
+                  />
+                ) : (
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    {currentTheme.navbarIcon}
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-4 border-b border-gray-200 mb-8">
+           {/* Tabs */}
+           <div className="flex flex-col sm:flex-row gap-2  sm:gap-4 border-b border-white/50 mb-6">
               {["profile", "interests", "bucketlist", "challenges"].map((tab) => (
                 <button
                   key={tab}
-                  className={`px-4 py-2 text-lg font-medium transition-colors ${
+                  className={`px-3 py-1.5 sm:px-4 sm:py-2 text-base sm:text-lg font-medium transition-colors rounded-t ${
                     activeTab === tab
                       ? "border-b-2 border-indigo-600 text-indigo-600"
-                      : "text-gray-600 hover:text-indigo-500"
+                      : "text-white/80 hover:text-indigo-300"
                   }`}
                   onClick={() => setActiveTab(tab)}
                 >
@@ -82,7 +88,7 @@ const Settings = ({ toggleTheme, isDarkMode }) => {
             </div>
 
             {/* Tab Content */}
-            <div className="bg-white/40 rounded-xl shadow-md p-6">
+            <div className="bg-white/30 rounded-xl shadow-xl p-4 sm:p-6 backdrop-blur-md">
               {activeTab === "profile" && <ProfileTab onLogout={handleLogout} />}
               {activeTab === "interests" && <InterestsTab />}
               {activeTab === "bucketlist" && <BucketListTab />}
