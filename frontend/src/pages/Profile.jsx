@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { setAuthUser } from "../../redux/userSclice";
+import { setAuthUser } from "../../redux/userSlice";
 import MainSlideBar from "../component/main_SlideBar.jsx";
 import PageLoader from "../component/pagesLoader.jsx";
 import ErrorBoundary from "../component/ErrorBoundary";

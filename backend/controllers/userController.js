@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { User } from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -51,7 +52,7 @@ export const register = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password.trim(), salt);
 
-        const profilePhoto = `https://avatar.iran.liara.run/public/${gender === "Male" ? "boy" : "girl"}?username=${username.trim()}`;
+        const profilePhoto = `https://ui-avatars.com/api/?name=${username.trim()}&background=random&color=fff&size=256`;
 
         const newUser = await User.create({
             fullName,
@@ -166,6 +167,46 @@ export const getProfile = async (req, res) => {
         return res.status(200).json(user);
     } catch (error) {
         console.error("Get Profile Error:", error);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export const getUserProfileById = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const currentUserId = req.userId;
+
+        const user = await User.findById(userId).select("-password");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Determine relationship status for the UI
+        let connectionStatus = "none";
+        if (currentUserId) {
+            const currentUser = await User.findById(currentUserId);
+            if (currentUser) {
+                if (currentUser.connections.includes(userId)) {
+                    connectionStatus = "connected";
+                } else if (currentUser.sentRequests.includes(userId)) {
+                    connectionStatus = "pending";
+                } else if (currentUser.receivedRequests.includes(userId)) {
+                    connectionStatus = "received";
+                }
+            }
+        }
+
+        const isFollowing = user.followers.includes(currentUserId);
+
+        return res.status(200).json({
+            user,
+            connectionStatus,
+            isFollowing,
+            followersCount: user.followers.length,
+            followingCount: user.following.length
+        });
+    } catch (error) {
+        console.error("Get User Profile By ID Error:", error);
         return res.status(500).json({ message: "Server Error" });
     }
 };
@@ -445,6 +486,45 @@ export const getConnections = async (req, res) => {
         return res.status(200).json(connections);
     } catch (error) {
         console.error("Get Connections Error:", error);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// Admin Moderation Controllers
+export const getAllUsersAdmin = async (req, res) => {
+    try {
+        const users = await User.find({}).select("-password");
+        return res.status(200).json(users);
+    } catch (error) {
+        console.error("Get All Users Admin Error:", error);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export const deleteUserAdmin = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        await User.findByIdAndDelete(userId);
+        return res.status(200).json({ message: "User deleted successfully" });
+    } catch (error) {
+        console.error("Delete User Admin Error:", error);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export const updateUserRoleAdmin = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { role } = req.body; // "admin" or "user"
+        
+        if (!["admin", "user"].includes(role)) {
+            return res.status(400).json({ message: "Invalid role" });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(userId, { role }, { new: true }).select("-password");
+        return res.status(200).json({ message: "User role updated", user: updatedUser });
+    } catch (error) {
+        console.error("Update User Role Admin Error:", error);
         return res.status(500).json({ message: "Server Error" });
     }
 };

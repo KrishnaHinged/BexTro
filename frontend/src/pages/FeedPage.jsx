@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import SkeletonCard from '../component/SkeletonCard';
 import axios from 'axios';
 import Masonry from 'react-masonry-css';
 import PostCard from '../component/PostCard';
@@ -6,7 +7,9 @@ import ErrorBoundary from '../component/ErrorBoundary';
 import { useSelector } from 'react-redux';
 import { Navigate } from 'react-router-dom';
 import Navbar from '../component/home/Navbar.jsx';
-
+import MainSlideBar from "../component/main_SlideBar";
+import PageLoader from "../component/pagesLoader";
+import { motion, AnimatePresence } from "framer-motion";
 const API_URL = "http://localhost:5005/api/v1";
 
 const FeedPage = () => {
@@ -72,55 +75,86 @@ const FeedPage = () => {
 
     return (
         <ErrorBoundary>
-            <div className="min-h-screen bg-transparent relative">
-                <div className='fixed top-0 left-0 w-full h-full -z-10 bg-gradient-to-br from-indigo-50/40 via-purple-50/30 to-blue-50/40'></div>
+            <div className="flex min-h-screen">
 
-                <Navbar />
+                {/* ✅ Sidebar SAME as Dashboard */}
+                <MainSlideBar />
 
-                <div className="pt-24 px-4 md:px-8 max-w-7xl mx-auto">
-                    <div className="flex flex-col items-center mb-10 w-full bg-white/40 backdrop-blur-md rounded-3xl py-8 shadow-sm border border-white/60">
-                        <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-500 to-blue-600 mb-6">
-                            Community Feeds
-                        </h1>
+                {/* ✅ Right Content Area */}
+                <div className="flex-1 p-4 md:p-8">
+
+                    {/* Background Gradient */}
+                    <div className='fixed top-0 left-0 w-full h-full -z-10 bg-gradient-to-br from-indigo-50/40 via-purple-50/30 to-blue-50/40'></div>
+
+                    {/* Header */}
+                    <h1 className="text-3xl md:text-4xl font-bold text-white/80 mb-8">
+                        Community Feed <span className="text-blue-500">✨</span>
+                    </h1>
+
+                    {/* Tabs Card (Glass Style like Dashboard cards) */}
+                    <div className="bg-white/40 backdrop-blur-md rounded-3xl p-6 shadow-sm border border-white/60 mb-8 flex flex-col items-center">
 
                         <div className="flex bg-white/60 p-1.5 rounded-full border w-72">
                             <button
-                                className={`flex-1 py-2.5 rounded-full ${activeTab === 'foryou' ? 'bg-indigo-500 text-white' : 'text-gray-500'}`}
+                                className={`flex-1 py-2.5 rounded-full transition ${activeTab === 'foryou'
+                                        ? 'bg-indigo-500 text-white'
+                                        : 'text-gray-500'
+                                    }`}
                                 onClick={() => setActiveTab('foryou')}
                             >
                                 For You
                             </button>
+
                             <button
-                                className={`flex-1 py-2.5 rounded-full ${activeTab === 'following' ? 'bg-indigo-500 text-white' : 'text-gray-500'}`}
+                                className={`flex-1 py-2.5 rounded-full transition ${activeTab === 'following'
+                                        ? 'bg-indigo-500 text-white'
+                                        : 'text-gray-500'
+                                    }`}
                                 onClick={() => setActiveTab('following')}
                             >
                                 Following
                             </button>
                         </div>
                     </div>
+                    <div className="px-2 md:px-4">
+                        {loading ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                                    <SkeletonCard key={i} />
+                                ))}
+                            </div>
+                        ) : !posts || posts.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-center">
+                                <div className="bg-white/40 p-6 rounded-full mb-6">
+                                    <span className="text-5xl">📭</span>
+                                </div>
+                                <h3 className="text-2xl font-black text-gray-800 mb-2">The feed is quiet...</h3>
+                                <p className="text-gray-500 max-w-xs font-medium">
+                                    Try following more users or check back later for new inspiring challenges and proofs!
+                                </p>
+                            </div>
+                        ) : (
+                            <Masonry
+                                breakpointCols={breakpointColumnsObj}
+                                className="flex w-auto -ml-4"
+                                columnClassName="pl-4"
+                            >
+                                {(Array.isArray(posts) ? posts : []).map(post => {
+                                    if (!post || !post._id) return null;
+                                    return (
+                                        <PostCard
+                                            key={post._id}
+                                            post={post}
+                                            currentUser={user}
+                                        />
+                                    );
+                                })}
+                            </Masonry>
+                        )}
+                    </div>
 
-                    {loading ? (
-                        <div className="flex justify-center items-center h-64">
-                            <span className="loading loading-spinner text-info w-16"></span>
-                        </div>
-                    ) : !posts || posts.length === 0 ? (
-                        <div className="text-center text-gray-500 mt-20 bg-white/40 p-8 rounded-3xl">
-                            No posts available.
-                        </div>
-                    ) : (
-                        <Masonry
-                            breakpointCols={breakpointColumnsObj}
-                            className="flex w-auto -ml-6 pb-20"
-                            columnClassName="pl-6"
-                        >
-                           {Array.isArray(posts) && posts.map(post => (
-                                <PostCard key={post._id} post={post} currentUser={user} />
-                            ))}
-                        </Masonry>
-                    )}
-                </div> {/* inner container */}
-
-            </div> {/* ❗ outer wrapper FIXED */}
+                </div>
+            </div>
         </ErrorBoundary>
     );
 };

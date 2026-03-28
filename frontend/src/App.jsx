@@ -21,7 +21,7 @@ import UserProfile from "./pages/UserProfile";
 import Community from "./pages/Community";
 
 import { setSocket } from "../redux/socketSlice";
-import { setOnlineUser } from "../redux/userSclice";
+import { setOnlineUser } from "../redux/userSlice";
 import { themes } from "./utils/theme";
 
 import UserExperience from "./component/home/userExperience";
@@ -254,6 +254,7 @@ const App = () => {
             }
           />
           <Route path="/communities" element={<ProtectedRoute><Community /></ProtectedRoute>} />
+          <Route path="/chats" element={<ProtectedRoute><Chats /></ProtectedRoute>} />
           <Route path="/user/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
           <Route
             path="/settings"

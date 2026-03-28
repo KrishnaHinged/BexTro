@@ -34,13 +34,14 @@ export default function challengeRoutes(filter) {
     // Generate AI-Based Challenges — BULLETPROOF VERSION
     // Generate AI-Based Challenges — FULLY PERSONALIZED + BULLETPROOF
     router.get("/generate-challenges", isAuthenticated, async (req, res) => {
+        let keywords = [];
         try {
             const user = await User.findById(req.userId).lean();
             if (!user) return res.status(404).json({ message: "User not found" });
 
-            const interests = user.interests || [];
-            const bucketList = user.bucketList?.map(i => i.text) || [];
-            const keywords = [...new Set([...interests, ...bucketList])];
+            const interests = (user.interests || []).filter(Boolean);
+            const bucketList = (user.bucketList || []).map(i => i.text).filter(Boolean);
+            keywords = [...new Set([...interests, ...bucketList])].filter(k => typeof k === 'string' && k.trim().length > 0);
 
             if (keywords.length === 0) {
                 return res.status(400).json({ error: "Add interests or bucket list items first!" });

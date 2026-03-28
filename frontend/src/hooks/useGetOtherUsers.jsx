@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
-import { setOtherUser } from '../../redux/userSclice'; // Fixed typo
+import { setOtherUser } from '../../redux/userSlice'; 
 
 const useGetOtherUsers = () => {
   const dispatch = useDispatch();

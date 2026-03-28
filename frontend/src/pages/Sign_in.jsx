@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useDispatch } from "react-redux";
-import { setAuthUser } from "../../redux/userSclice.js"; // Fixed typo
+import { setAuthUser } from "../../redux/userSlice.js"; 
 
 const Sign_in = () => {
   const [user, setUser] = useState({
@@ -42,10 +42,9 @@ const Sign_in = () => {
         password: "",
       });
     } catch (error) {
-      console.error("Login error:", error); // Debug log
-      toast.error(
-        error.response?.data?.message || "An error occurred. Try again."
-      );
+      console.error("Login error:", error);
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || "An error occurred. Please try again.";
+      toast.error(errorMessage);
     }
   };
 

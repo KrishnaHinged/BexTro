@@ -165,53 +165,77 @@ const Community = () => {
 
 const CommunitiesSection = ({ communities, myCommunities, onJoin }) => {
     const [activeSubTab, setActiveSubTab] = useState("explore");
+    const displayList = activeSubTab === "explore" ? communities : myCommunities;
 
     return (
-        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-lg">
-            <div className="flex gap-4 border-b border-white/20 mb-6 pb-4">
+        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl transition-all duration-500">
+            <div className="flex gap-6 border-b border-white/10 mb-8 pb-4">
                 <button 
                     onClick={() => setActiveSubTab("explore")}
-                    className={`pb-2 font-bold px-2 ${activeSubTab === 'explore' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-white/60'}`}
+                    className={`pb-2 font-bold px-4 transition-all duration-300 ${activeSubTab === 'explore' ? 'text-indigo-400 border-b-2 border-indigo-400 scale-105' : 'text-white/40 hover:text-white/70'}`}
                 >
                     Explore Public
                 </button>
                 <button 
                     onClick={() => setActiveSubTab("mine")}
-                    className={`pb-2 font-bold px-2 ${activeSubTab === 'mine' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-white/60'}`}
+                    className={`pb-2 font-bold px-4 transition-all duration-300 ${activeSubTab === 'mine' ? 'text-indigo-400 border-b-2 border-indigo-400 scale-105' : 'text-white/40 hover:text-white/70'}`}
                 >
                     My Communities
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {(activeSubTab === "explore" ? communities : myCommunities).map(c => (
-                    <div key={c._id} className="bg-white/20 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-white/30 hover:shadow-md transition-all">
-                        <div className={`h-24 rounded-xl bg-gradient-to-r ${c.coverColor} mb-4 flex items-end p-4`}>
-                            <h3 className="text-xl font-bold text-white drop-shadow-md">{c.name}</h3>
+            {displayList.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {displayList.map(c => (
+                        <div key={c._id} className="group bg-white/10 backdrop-blur-md p-1 rounded-3xl shadow-lg border border-white/20 hover:border-indigo-500/50 hover:shadow-indigo-500/10 transition-all duration-500 transform hover:-translate-y-2">
+                            <div className="p-5">
+                                <div className={`h-32 rounded-2xl bg-gradient-to-br ${c.coverColor || 'from-indigo-500 to-purple-600'} mb-5 flex items-end p-5 shadow-inner overflow-hidden relative`}>
+                                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500"></div>
+                                    <h3 className="text-2xl font-bold text-white drop-shadow-xl z-10">{c.name}</h3>
+                                </div>
+                                <p className="text-white/70 text-sm mb-6 line-clamp-2 min-h-[3rem] leading-relaxed">{c.description}</p>
+                                
+                                <div className="flex justify-between items-center mt-auto pt-4 border-t border-white/5">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></div>
+                                        <span className="text-indigo-300 font-medium text-xs tracking-wide uppercase">
+                                            {c.memberCount || 0} Members
+                                        </span>
+                                    </div>
+                                    
+                                    {activeSubTab === "explore" ? (
+                                        <button 
+                                            onClick={() => onJoin(c._id)}
+                                            className="text-white bg-indigo-600/80 hover:bg-indigo-600 px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-indigo-500/20 transition-all active:scale-95"
+                                        >
+                                            Join
+                                        </button>
+                                    ) : (
+                                        <Link to={`/chats?community=${c._id}`} className="flex items-center gap-2 text-indigo-300 hover:text-white font-bold text-sm bg-white/5 hover:bg-indigo-500 px-4 py-2.5 rounded-xl transition-all group/btn">
+                                            Open Chat <span className="group-hover/btn:translate-x-1 transition-transform">→</span>
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                        <p className="text-white/80 text-sm mb-4 line-clamp-2 min-h-10">{c.description}</p>
-                        
-                        <div className="flex justify-between items-center mt-auto">
-                            <span className="text-indigo-300 font-bold bg-indigo-500/20 px-3 py-1 rounded-lg text-xs">
-                                {c.memberCount} Members
-                            </span>
-                            
-                            {activeSubTab === "explore" ? (
-                                <button 
-                                    onClick={() => onJoin(c._id)}
-                                    className="text-white bg-gray-700 hover:bg-gray-800 px-4 py-2 rounded-lg font-bold text-sm transition"
-                                >
-                                    Join
-                                </button>
-                            ) : (
-                                <Link to={`/chats?community=${c._id}`} className="text-indigo-300 hover:text-indigo-100 font-bold text-sm">
-                                    Open Chat &rarr;
-                                </Link>
-                            )}
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
+                    <div className="text-6xl mb-4 opacity-50">🏔️</div>
+                    <p className="text-white/40 font-medium text-lg">
+                        {activeSubTab === "explore" ? "No public communities found." : "You haven't joined any communities yet."}
+                    </p>
+                    {activeSubTab === "mine" && (
+                        <button 
+                            onClick={() => setActiveSubTab("explore")}
+                            className="mt-4 text-indigo-400 hover:text-indigo-300 font-bold underline underline-offset-4"
+                        >
+                            Explore Communities
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

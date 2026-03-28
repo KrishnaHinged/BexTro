@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { logoutUser } from "../../../redux/userSclice.js";
+import { logoutUser } from "../../../redux/userSlice.js";
 
 const InterestsTab = () => {
   const [interests, setInterests] = useState([]);

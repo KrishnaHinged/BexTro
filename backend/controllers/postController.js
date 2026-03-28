@@ -109,18 +109,38 @@ export const getFeed = async (req, res) => {
         let filter = {};
         
         if (tab === "following") {
-            // Include following + own posts
             const followingIds = user.following || [];
             filter = { user: { $in: [...followingIds, userId] } };
         } 
-        // If tab is 'foryou' or undefined, global feed (no user filter)
 
         const posts = await Post.find(filter)
             .sort({ createdAt: -1 })
-            .populate("user", "fullName username profilePhoto")
-            .limit(50); // pagination can be added later
+            .populate("user", "fullName username profilePhoto following")
+            .limit(50);
 
-        return res.status(200).json(posts);
+        const postsWithStatus = posts.map(post => {
+            const p = post.toObject();
+            const authorId = p.user._id.toString();
+            
+            let status = "none";
+            if (authorId === userId.toString()) {
+                status = "self";
+            } else {
+                const iFollow = (user.following || []).some(id => id.toString() === authorId);
+                const theyFollowMe = (p.user.following || []).some(id => id.toString() === userId.toString());
+                
+                if (iFollow && theyFollowMe) status = "mutual";
+                else if (iFollow) status = "following";
+                else if (theyFollowMe) status = "followed_by";
+            }
+            
+            p.authorConnectionStatus = status;
+            // Remove following from response to keep it clean
+            delete p.user.following;
+            return p;
+        });
+
+        return res.status(200).json(postsWithStatus);
     } catch (error) {
         console.error("Get Feed Error:", error);
         return res.status(500).json({ message: "Server Error" });
@@ -130,11 +150,35 @@ export const getFeed = async (req, res) => {
 export const getUserPosts = async (req, res) => {
     try {
         const { userId } = req.params;
+        const currentUserId = req.userId;
+        const currentUser = await User.findById(currentUserId);
+
         const posts = await Post.find({ user: userId })
             .sort({ createdAt: -1 })
-            .populate("user", "fullName username profilePhoto");
+            .populate("user", "fullName username profilePhoto following");
 
-        return res.status(200).json(posts);
+        const postsWithStatus = posts.map(post => {
+            const p = post.toObject();
+            const authorId = p.user._id.toString();
+            
+            let status = "none";
+            if (authorId === currentUserId.toString()) {
+                status = "self";
+            } else if (currentUser) {
+                const iFollow = (currentUser.following || []).some(id => id.toString() === authorId);
+                const theyFollowMe = (p.user.following || []).some(id => id.toString() === currentUserId.toString());
+                
+                if (iFollow && theyFollowMe) status = "mutual";
+                else if (iFollow) status = "following";
+                else if (theyFollowMe) status = "followed_by";
+            }
+            
+            p.authorConnectionStatus = status;
+            delete p.user.following;
+            return p;
+        });
+
+        return res.status(200).json(postsWithStatus);
     } catch (error) {
         console.error("Get User Posts Error:", error);
         return res.status(500).json({ message: "Server Error" });

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { FaHome, FaBell, FaComment, FaChartPie, FaCog, FaGlobe, FaUsers } from "react-icons/fa";
 
 const MainSlideBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { authUser } = useSelector(store => store.user);
   const [active, setActive] = useState("dashboard");
 
   const menuItems = [
@@ -44,6 +46,21 @@ const MainSlideBar = () => {
             {icon}
           </button>
         ))}
+      </div>
+
+      {/* User Session Info */}
+      <div className="absolute bottom-10 left-0 w-full flex flex-col items-center gap-6">
+        <div 
+          onClick={() => navigate("/profile")}
+          className="relative cursor-pointer group"
+        >
+          <img 
+            src={authUser?.profilePhoto || `https://ui-avatars.com/api/?name=${authUser?.username}&background=6366f1&color=fff`} 
+            alt="User" 
+            className="w-12 h-12 rounded-2xl object-cover border-2 border-white/50 shadow-md group-hover:scale-110 transition-transform duration-300"
+          />
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+        </div>
       </div>
     </div>
   );

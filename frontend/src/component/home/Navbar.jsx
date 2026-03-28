@@ -47,18 +47,20 @@ const Navbar = ({ toggleTheme, currentTheme }) => {
       <div className="hidden sm:flex items-center gap-3 sm:gap-4">
         <div
           className="bg-white/85 p-1.5 sm:p-2 rounded-full border border-white cursor-pointer"
-          onClick={toggleTheme}
+          onClick={toggleTheme || (() => {})}
         >
-          {typeof currentTheme.navbarIcon === "string" ? (
+          {typeof currentTheme?.navbarIcon === "string" ? (
             <img
               src={currentTheme.navbarIcon}
               alt="Theme Toggle"
               className="w-5 h-5 sm:w-6 sm:h-6"
             />
-          ) : (
+          ) : currentTheme?.navbarIcon ? (
             <div className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
               {currentTheme.navbarIcon}
             </div>
+          ) : (
+            <div className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">🌙</div>
           )}
         </div>
         <button className="bg-white/85 text-gray-900 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl border border-white text-sm sm:text-base">

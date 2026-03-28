@@ -50,8 +50,9 @@ const SignUp = () => {
         gender: "",
       });
     } catch (error) {
-      toast.error(error.response?.data?.message || "An error occurred. Try again.");
-      setError(error.response?.data?.message || "An error occurred. Try again.");
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || "An error occurred. Please try again.";
+      toast.error(errorMessage);
+      setError(errorMessage);
     }
   };
 

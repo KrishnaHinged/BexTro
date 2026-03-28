@@ -7,9 +7,15 @@ import { getReceiverSocketId, io } from "../socket/socket.js";
 // Utility function to check if users can DM
 const canMessageDirectly = async (senderId, receiverId) => {
     const sender = await User.findById(senderId);
+    const receiver = await User.findById(receiverId);
     
-    // 1. Are they explicitly connected?
-    if (sender.connections && sender.connections.includes(receiverId)) {
+    if (!sender || !receiver) return false;
+
+    // 1. Mutual Follow Check (BexTro Restriction)
+    const senderFollowsReceiver = sender.following && sender.following.includes(receiverId);
+    const receiverFollowsSender = receiver.following && receiver.following.includes(senderId);
+
+    if (senderFollowsReceiver && receiverFollowsSender) {
         return true;
     }
 
@@ -86,7 +92,10 @@ export const getMessage = async (req, res) => {
 
         const conversation = await Conversation.findOne({
             participants: { $all: [senderId, receiverId] }
-        }).populate("messages");
+        }).populate({
+            path: "messages",
+            populate: { path: "senderId", select: "fullName username profilePhoto" }
+        });
 
         return res.status(200).json(conversation?.messages || []);
     } catch (error) {
@@ -107,17 +116,19 @@ export const sendCommunityMessage = async (req, res) => {
             return res.status(403).json({ message: "You must be a member of this community to chat here." });
         }
 
-        // We use the Message model with communityId instead of receiverId
         const newMessage = await Message.create({
             senderId,
             communityId,
             message
         });
 
-        // Broadcast to community room
-        io.to(`community_${communityId}`).emit("newCommunityMessage", newMessage);
+        // Populate sender before emitting
+        const populatedMessage = await Message.findById(newMessage._id).populate("senderId", "fullName username profilePhoto");
 
-        return res.status(201).json({ newMessage });
+        // Broadcast to community room
+        io.to(`community_${communityId}`).emit("newCommunityMessage", populatedMessage);
+
+        return res.status(201).json({ newMessage: populatedMessage });
     } catch (error) {
         console.error("Community Msg Error:", error);
         return res.status(500).json({ message: "Failed to send community message" });
@@ -134,8 +145,11 @@ export const getCommunityMessages = async (req, res) => {
             return res.status(403).json({ message: "You must be a member to read this chat." });
         }
 
-        // Fetch last 100 messages for community
-        const messages = await Message.find({ communityId }).sort({ createdAt: 1 }).limit(100);
+        // Fetch last 100 messages for community with sender info
+        const messages = await Message.find({ communityId })
+            .populate("senderId", "fullName username profilePhoto")
+            .sort({ createdAt: 1 })
+            .limit(100);
 
         return res.status(200).json(messages);
     } catch (error) {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { logoutUser } from "../../redux/userSclice.js";
+import { logoutUser } from "../../redux/userSlice.js";
 import MainSlideBar from "../component/main_SlideBar.jsx";
 import PageLoader from "../component/pagesLoader.jsx";
 import ProfileTab from "../component/setting_tab/ProfileTab.jsx";

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { BiSearchAlt2 } from "react-icons/bi";
 import { useDispatch, useSelector } from "react-redux";
-import { setOtherUser } from "../../../redux/userSclice";
+import { setOtherUser } from "../../../redux/userSlice";
 import toast from "react-hot-toast";
 import OUsers from "./otherUsers";
 
