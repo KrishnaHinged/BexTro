@@ -36,8 +36,19 @@ const userSchema = new mongoose.Schema(
             {
                 challengeText: { type: String, required: true },
                 acceptedAt: { type: Date, default: Date.now },
+                status: { type: String, enum: ["active", "completed", "skipped", "abandoned"], default: "active" },
+                timelineDays: { type: Number, default: 0 },
+                proofPostId: { type: mongoose.Schema.Types.ObjectId, ref: "Post" }
             },
         ],
+
+        followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+        following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+        
+        // Connections Architecture (Mutuals / Pending Requests)
+        connections: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+        sentRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+        receivedRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 
         stats: {
             totalAccepted: { type: Number, default: 0 },

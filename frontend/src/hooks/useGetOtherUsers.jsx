@@ -19,11 +19,20 @@ const useGetOtherUsers = () => {
       setError(null);
       try {
         axios.defaults.withCredentials = true;
-        const res = await axios.get(
-          'http://localhost:5005/api/v1/user/users',
-          { signal: controller.signal }
-        );
-        dispatch(setOtherUser(res.data));
+        const [userRes, commRes] = await Promise.all([
+          axios.get('http://localhost:5005/api/v1/user/users', { signal: controller.signal }),
+          axios.get('http://localhost:5005/api/v1/communities/my-communities', { signal: controller.signal })
+        ]);
+
+        const communityList = commRes.data.map(c => ({
+            _id: c._id,
+            fullName: c.name,
+            username: `${c.memberCount} Members`,
+            profilePhoto: `https://avatar.iran.liara.run/public/job/designer?username=${c.name}`,
+            isCommunity: true
+        }));
+
+        dispatch(setOtherUser([...communityList, ...userRes.data]));
       } catch (error) {
         if (axios.isCancel(error)) {
           console.log('Request cancelled', error.message);

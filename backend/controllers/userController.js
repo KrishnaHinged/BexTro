@@ -136,9 +136,17 @@ export const getOtherUsers = async (req, res) => {
             return res.status(401).json({ message: "Unauthorized access" });
         }
 
-        const otherUsers = await User.find({ _id: { $ne: req.userId } }).select("-password");
+        const currentUser = await User.findById(req.userId);
+        if (!currentUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
-        return res.status(200).json(otherUsers);
+        // Only return users who are mutual connections
+        const connectedUsers = await User.find({ 
+            _id: { $in: currentUser.connections || [] }
+        }).select("-password");
+
+        return res.status(200).json(connectedUsers);
     } catch (error) {
         console.error("Get Other Users Error:", error);
         return res.status(500).json({ message: "Server Error" });
@@ -239,6 +247,204 @@ export const updateScore = async (req, res) => {
         return res.status(200).json({ message: "Score updated", user: updatedUser });
     } catch (error) {
         console.error("Update Score Error:", error);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export const toggleFollow = async (req, res) => {
+    try {
+        const { targetUserId } = req.params;
+        const currentUserId = req.userId;
+
+        if (targetUserId === currentUserId) {
+            return res.status(400).json({ message: "You cannot follow yourself" });
+        }
+
+        const targetUser = await User.findById(targetUserId);
+        const currentUser = await User.findById(currentUserId);
+
+        if (!targetUser || !currentUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const isFollowing = currentUser.following.includes(targetUserId);
+
+        if (isFollowing) {
+            // Unfollow
+            currentUser.following = currentUser.following.filter(id => id.toString() !== targetUserId.toString());
+            targetUser.followers = targetUser.followers.filter(id => id.toString() !== currentUserId.toString());
+        } else {
+            // Follow
+            currentUser.following.push(targetUserId);
+            targetUser.followers.push(currentUserId);
+        }
+
+        await currentUser.save();
+        await targetUser.save();
+
+        return res.status(200).json({ 
+            message: isFollowing ? "Unfollowed successfully" : "Followed successfully", 
+            isFollowing: !isFollowing 
+        });
+    } catch (error) {
+        console.error("Toggle Follow Error:", error);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export const sendConnectionRequest = async (req, res) => {
+    try {
+        const { targetUserId } = req.params;
+        const currentUserId = req.userId;
+
+        if (targetUserId === currentUserId) {
+            return res.status(400).json({ message: "You cannot send request to yourself" });
+        }
+
+        const targetUser = await User.findById(targetUserId);
+        const currentUser = await User.findById(currentUserId);
+
+        if (!targetUser || !currentUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Check if already connected
+        if (currentUser.connections.includes(targetUserId)) {
+            return res.status(400).json({ message: "Already connected" });
+        }
+
+        // Check if request already sent
+        if (currentUser.sentRequests.includes(targetUserId)) {
+            return res.status(400).json({ message: "Request already sent" });
+        }
+
+        // Check if target has already sent request
+        if (currentUser.receivedRequests.includes(targetUserId)) {
+            return res.status(400).json({ message: "You have a pending request from this user" });
+        }
+
+        // Add to sent requests
+        currentUser.sentRequests.push(targetUserId);
+        targetUser.receivedRequests.push(currentUserId);
+
+        await currentUser.save();
+        await targetUser.save();
+
+        return res.status(200).json({ message: "Connection request sent successfully" });
+    } catch (error) {
+        console.error("Send Connection Request Error:", error);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export const acceptConnectionRequest = async (req, res) => {
+    try {
+        const { targetUserId } = req.params;
+        const currentUserId = req.userId;
+
+        const targetUser = await User.findById(targetUserId);
+        const currentUser = await User.findById(currentUserId);
+
+        if (!targetUser || !currentUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Check if request exists
+        if (!currentUser.receivedRequests.includes(targetUserId)) {
+            return res.status(400).json({ message: "No pending request from this user" });
+        }
+
+        // Remove from requests and add to connections
+        currentUser.receivedRequests = currentUser.receivedRequests.filter(id => id.toString() !== targetUserId);
+        targetUser.sentRequests = targetUser.sentRequests.filter(id => id.toString() !== currentUserId);
+
+        currentUser.connections.push(targetUserId);
+        targetUser.connections.push(currentUserId);
+
+        await currentUser.save();
+        await targetUser.save();
+
+        return res.status(200).json({ message: "Connection request accepted" });
+    } catch (error) {
+        console.error("Accept Connection Request Error:", error);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export const rejectConnectionRequest = async (req, res) => {
+    try {
+        const { targetUserId } = req.params;
+        const currentUserId = req.userId;
+
+        const targetUser = await User.findById(targetUserId);
+        const currentUser = await User.findById(currentUserId);
+
+        if (!targetUser || !currentUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Check if request exists
+        if (!currentUser.receivedRequests.includes(targetUserId)) {
+            return res.status(400).json({ message: "No pending request from this user" });
+        }
+
+        // Remove from requests
+        currentUser.receivedRequests = currentUser.receivedRequests.filter(id => id.toString() !== targetUserId);
+        targetUser.sentRequests = targetUser.sentRequests.filter(id => id.toString() !== currentUserId);
+
+        await currentUser.save();
+        await targetUser.save();
+
+        return res.status(200).json({ message: "Connection request rejected" });
+    } catch (error) {
+        console.error("Reject Connection Request Error:", error);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export const getConnectionRequests = async (req, res) => {
+    try {
+        const currentUserId = req.userId;
+        const currentUser = await User.findById(currentUserId);
+
+        if (!currentUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const receivedRequests = await User.find({ 
+            _id: { $in: currentUser.receivedRequests || [] }
+        }).select("fullName username profilePhoto");
+
+        const sentRequests = await User.find({ 
+            _id: { $in: currentUser.sentRequests || [] }
+        }).select("fullName username profilePhoto");
+
+        return res.status(200).json({
+            received: receivedRequests,
+            sent: sentRequests
+        });
+    } catch (error) {
+        console.error("Get Connection Requests Error:", error);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export const getConnections = async (req, res) => {
+    try {
+        const currentUserId = req.userId;
+        const currentUser = await User.findById(currentUserId);
+
+        if (!currentUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const connections = await User.find({ 
+            _id: { $in: currentUser.connections || [] }
+        }).select("fullName username profilePhoto");
+
+        return res.status(200).json(connections);
+    } catch (error) {
+        console.error("Get Connections Error:", error);
         return res.status(500).json({ message: "Server Error" });
     }
 };

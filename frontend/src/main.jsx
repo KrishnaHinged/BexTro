@@ -10,7 +10,14 @@ import { PersistGate } from "redux-persist/integration/react";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Provider store={store}>
-      <PersistGate loading={<div>Loading...</div>} persistor={persistor}>
+      <PersistGate
+        loading={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="loading loading-spinner text-info w-16 h-16"></div>
+          </div>
+        }
+        persistor={persistor}
+      >
         <App />
         <Toaster />
       </PersistGate>

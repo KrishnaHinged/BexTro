@@ -11,6 +11,9 @@ import messageRoutes from "./routes/messageRoutes.js";
 import challengeRoutes from "./routes/challengeRoutes.js";
 import quotesRoutes from "./routes/quotesRoutes.js";
 import newsRoutes from "./routes/newsRoutes.js";
+import postRoutes from "./routes/postRoutes.js";
+import connectionRoutes from "./routes/connectionRoutes.js";
+import communityRoutes from "./routes/communityRoutes.js";
 import { app, server } from "./socket/socket.js";
 
 dotenv.config();
@@ -44,6 +47,9 @@ app.use("/api/v1/userdata", userDataRoutes);
 app.use("/api/v1/message", messageRoutes);
 app.use("/api/v1/challenges", typeof challengeRoutes === "function" ? challengeRoutes(filter) : challengeRoutes);
 app.use("/api/v1/quotes", quotesRoutes);
+app.use("/api/v1/posts", postRoutes);
+app.use("/api/v1/connections", connectionRoutes);
+app.use("/api/v1/communities", communityRoutes);
 app.use("/api/v1", newsRoutes);
 
 // Catch-all 404 handler

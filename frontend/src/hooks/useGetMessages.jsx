@@ -18,7 +18,11 @@ const useGetMessages = () => {
 
       try {
         setLoading(true);
-        const res = await axios.get(`http://localhost:5005/api/v1/message/${selectedUser._id}`, {
+        const endpoint = selectedUser.isCommunity 
+            ? `http://localhost:5005/api/v1/message/community/${selectedUser._id}`
+            : `http://localhost:5005/api/v1/message/${selectedUser._id}`;
+            
+        const res = await axios.get(endpoint, {
           withCredentials: true,
         });
         dispatch(setMessages(res.data || []));

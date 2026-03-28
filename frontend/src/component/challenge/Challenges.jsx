@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import Confetti from "react-confetti";
 import LoaderScreen from "../LoaderScreen.jsx";
 import LoaderC from "../LoaderC.jsx";
+import ChallengeAcceptModal from "../ChallengeAcceptModal.jsx";
 
 const Challenges = () => {
     const [challenges, setChallenges] = useState([]);
@@ -14,6 +15,7 @@ const Challenges = () => {
     const [showConfetti, setShowConfetti] = useState(false);
     const [showLoader, setShowLoader] = useState(false);
     const [showLoaderScreen, setShowLoaderScreen] = useState(false);
+    const [selectedAcceptChallenge, setSelectedAcceptChallenge] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -37,20 +39,16 @@ const Challenges = () => {
         fetchChallenges();
     }, []);
 
-    const handleAccept = async (challenge, index) => {
-        try {
-            await axios.post(
-                "http://localhost:5005/api/v1/challenges/accept",
-                { challenge: challenge.text },
-                { withCredentials: true }
-            );
-            toast.success("Challenge accepted—go get it!");
-            setChallenges((prev) => prev.filter((_, i) => i !== index));
-            setShowConfetti(true);
-            setTimeout(() => setShowConfetti(false), 4000); // Confetti for 4000ms
-        } catch (error) {
-            toast.error("Failed to accept—try again!");
-        }
+    const handleAcceptClick = (challenge, index) => {
+        setSelectedAcceptChallenge({ challenge, index });
+    };
+
+    const handleAcceptSuccess = (data) => {
+        toast.success("Challenge accepted—go get it!");
+        setChallenges((prev) => prev.filter((_, i) => i !== selectedAcceptChallenge.index));
+        setSelectedAcceptChallenge(null);
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 4000); // Confetti for 4000ms
     };
 
     const handleSkip = async (index) => {
@@ -124,6 +122,15 @@ const Challenges = () => {
                 <div className="fixed inset-0 z-[998] bg-gray-900">
                     <LoaderScreen />
                 </div>
+            )}
+
+            {/* Accept Modal */}
+            {selectedAcceptChallenge && (
+                <ChallengeAcceptModal
+                    challengeText={selectedAcceptChallenge.challenge.text}
+                    onClose={() => setSelectedAcceptChallenge(null)}
+                    onSuccess={handleAcceptSuccess}
+                />
             )}
 
             {/* Main Content */}
@@ -239,7 +246,7 @@ const Challenges = () => {
                                                 <motion.button
                                                     whileHover={{ scale: 1.05 }}
                                                     whileTap={{ scale: 0.95 }}
-                                                    onClick={() => handleAccept(challenge, index)}
+                                                    onClick={() => handleAcceptClick(challenge, index)}
                                                     className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 font-medium flex items-center justify-center gap-2"
                                                 >
                                                     <svg

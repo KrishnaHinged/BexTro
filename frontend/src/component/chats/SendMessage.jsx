@@ -11,7 +11,11 @@ const {selectedUser} = useSelector(store=>store.user)
     const onSubmitHandler = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post(`http://localhost:5005/api/v1/message/send/${selectedUser?._id}`, {message} ,{ Headers:{'Content-Type':'application/json'},
+            const endpoint = selectedUser.isCommunity 
+                ? `http://localhost:5005/api/v1/message/community/send/${selectedUser?._id}`
+                : `http://localhost:5005/api/v1/message/send/${selectedUser?._id}`;
+
+            const res = await axios.post(endpoint, {message} ,{ Headers:{'Content-Type':'application/json'},
                 withCredentials:true
         })
         dispatch(setMessages([...messages, res?.data?.newMessage]))

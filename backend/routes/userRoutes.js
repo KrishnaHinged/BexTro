@@ -6,15 +6,18 @@ import {
     register,
     getProfile,
     updateProfile,
-    updateScore
-
+    updateScore,
+    toggleFollow,
+    sendConnectionRequest,
+    acceptConnectionRequest,
+    rejectConnectionRequest,
+    getConnectionRequests,
+    getConnections
 } from "../controllers/userController.js";
 import isAuthenticated from "../middleware/isAuthenticated.js";
-import isAdmin from "../middleware/isAdmin.js"; 
+import isAdmin from "../middleware/isAdmin.js";
 
 const router = express.Router();
-
-router.post("/register", register);
 router.post("/login", login);
 router.post("/logout", logout);
 
@@ -23,6 +26,12 @@ router.get("/profile", getProfile);
 router.put("/profile", updateProfile);
 router.get("/users", getOtherUsers);
 router.put("/score", updateScore);
+router.post("/:targetUserId/follow", toggleFollow);
+router.post("/:targetUserId/connect", sendConnectionRequest);
+router.post("/:targetUserId/accept", acceptConnectionRequest);
+router.post("/:targetUserId/reject", rejectConnectionRequest);
+router.get("/connections/requests", getConnectionRequests);
+router.get("/connections", getConnections);
 router.get("/admin", isAdmin, (req, res) => {
     res.json({ message: "Welcome Admin!", user: req.user });
 });

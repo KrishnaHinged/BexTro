@@ -13,9 +13,12 @@ import Welcome from "./pages/welcome";
 import IntroToChallenges from "./pages/intro_to_Challenges";
 import DashBoard from "./pages/dashBoard";
 import Notifications from "./pages/Notifications";
-import SelfChallenges from "./pages/SelfChallenges";
+import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import AdminDashboard from "./pages/AdminDashboard";
+import FeedPage from "./pages/FeedPage";
+import UserProfile from "./pages/UserProfile";
+import Community from "./pages/Community";
 
 import { setSocket } from "../redux/socketSlice";
 import { setOnlineUser } from "../redux/userSclice";
@@ -35,7 +38,36 @@ import FadeInWhenVisible from "./component/common/FadeInWhenVisible";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.user.isAuthenticated);
-  return isAuthenticated ? children : <Navigate to="/signin" />;
+  const isRehydrated = useSelector((state) => state._persist?.rehydrated);
+
+  console.log("ProtectedRoute: isAuthenticated =", isAuthenticated, "isRehydrated =", isRehydrated);
+
+  if (!isRehydrated) {
+    console.log("ProtectedRoute: Not rehydrated, showing loading spinner");
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-50">
+        <div className="loading loading-spinner text-info w-16 h-16"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    console.log("ProtectedRoute: Not authenticated, showing login prompt");
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-50">
+        <div className="bg-white/40 backdrop-blur-md rounded-3xl p-8 shadow-sm border border-white/60 text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Authentication Required</h2>
+          <p className="text-gray-600 mb-6">Please sign in to access this page.</p>
+          <a href="/signin" className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-2 rounded-lg">
+            Sign In
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  console.log("ProtectedRoute: Authenticated, rendering children");
+  return children;
 };
 
 const App = () => {
@@ -203,10 +235,26 @@ const App = () => {
           />
           <Route path="/signin" element={<Sign_in />} />
           <Route path="/signup" element={<Sign_up />} />
-          <Route path="/chats" element={<ProtectedRoute><Chats /></ProtectedRoute>} />
-          <Route path="/adminchats" element={<ProtectedRoute><AdminChat /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-          <Route path="/self_challenges" element={<ProtectedRoute><SelfChallenges /></ProtectedRoute>} />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/feed"
+            element={
+              <ProtectedRoute>
+                <FeedPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/communities" element={<ProtectedRoute><Community /></ProtectedRoute>} />
+          <Route path="/user/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
           <Route
             path="/settings"
             element={
