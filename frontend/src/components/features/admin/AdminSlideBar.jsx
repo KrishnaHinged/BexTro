@@ -14,7 +14,7 @@ const AdminSlideBar = ({ onLogout, setActiveSection, currentTheme }) => {
     { id: "reports", label: "Reports", icon: <FaFlag size={20} />, section: "reports" },
     { id: "posts", label: "Posts", icon: <FaStream size={20} />, section: "posts" },
     { id: "analytics", label: "Analytics", icon: <FiActivity size={22} />, section: "analytics" },
-    { id: "chat", label: "Chat", icon: <FaComment size={20} />, path: "/adminchats" },
+    // { id: "chat", label: "Chat", icon: <FaComment size={20} />, path: "/adminchats" },
     { id: "settings", label: "Settings", icon: <FaCog size={22} />, section: "settings" },
     { id: "logout", label: "Logout", icon: <FiLogOut size={22} />, section: null },
   ];
