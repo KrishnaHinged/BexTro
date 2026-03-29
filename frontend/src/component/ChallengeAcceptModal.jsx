@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axiosInstance';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ChallengeAcceptModal = ({ challengeText, onClose, onSuccess }) => {
@@ -12,11 +12,7 @@ const ChallengeAcceptModal = ({ challengeText, onClose, onSuccess }) => {
     useEffect(() => {
         const fetchAISuggestion = async () => {
             try {
-                const res = await axios.post(
-                    "http://localhost:5005/api/v1/challenges/suggest-timeline",
-                    { challengeText },
-                    { withCredentials: true }
-                );
+                const res = await axiosInstance.post("/challenges/suggest-timeline", { challengeText });
 
                 if (res.data.suggestedDays) {
                     const validDays = [1, 3, 7];
@@ -41,14 +37,10 @@ const ChallengeAcceptModal = ({ challengeText, onClose, onSuccess }) => {
         setLoading(true);
         setError(null);
         try {
-            const res = await axios.post(
-                "http://localhost:5005/api/v1/challenges/accept",
-                {
-                    challenge: challengeText,
-                    timelineDays: Number(timelineDays)
-                },
-                { withCredentials: true }
-            );
+            const res = await axiosInstance.post("/challenges/accept", {
+                challenge: challengeText,
+                timelineDays: Number(timelineDays)
+            });
 
             onSuccess(res.data);
         } catch (err) {

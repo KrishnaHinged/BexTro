@@ -39,6 +39,17 @@ const Message = ({ message }) => {
             <div className={`chat-bubble text-sm font-medium shadow-sm transition-all hover:shadow-md ${isSender ? 'bg-indigo-600 text-white' : 'bg-white text-gray-800 border border-gray-100'}`}>
                 {message?.message}
             </div>
+            {isSender && (
+                <div className="chat-footer opacity-50 text-[10px] mt-1 flex items-center gap-1">
+                    {message.isOptimistic ? (
+                        <span className="animate-pulse italic">Sending...</span>
+                    ) : message.isSeen ? (
+                        <span className="text-blue-500 font-bold">Seen</span>
+                    ) : (
+                        <span>Sent</span>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

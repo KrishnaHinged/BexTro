@@ -11,7 +11,7 @@ const Notifications = () => {
     }, []);
 
     return (
-        <div className="flex min-h-screen">
+        <div className="flex min-h-screen ">
             {step === 1 && <PageLoader message=" Notifications..." />}
             {step === 2 && (
                 <>

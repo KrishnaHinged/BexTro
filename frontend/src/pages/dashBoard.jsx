@@ -51,7 +51,7 @@ const DashBoard = () => {
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.6 }}
                     >
-                        <h1 className="text-3xl md:text-4xl font-bold text-white/80q mb-8">
+                        <h1 className="text-3xl md:text-4xl font-bold text-white/80 mb-8">
                             {user ? `Welcome back, ${user.fullName.split(' ')[0]}` : "Welcome!"}
                             <span className="text-blue-500">!</span>
                         </h1>

@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { logoutUser } from "../../redux/userSlice.js";
+import axiosInstance from "../utils/axiosInstance.js";
 import MainSlideBar from "../component/main_SlideBar.jsx";
 import PageLoader from "../component/pagesLoader.jsx";
 import ProfileTab from "../component/setting_tab/ProfileTab.jsx";
@@ -15,7 +16,6 @@ const Settings = ({ toggleTheme, currentTheme }) => {
   const [activeTab, setActiveTab] = useState("profile");
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.user);
 
   useEffect(() => {
     setTimeout(() => setStep(2), 2000);
@@ -23,21 +23,17 @@ const Settings = ({ toggleTheme, currentTheme }) => {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("http://localhost:5005/api/v1/user/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-      if (response.ok) {
+      const res = await axiosInstance.post("/user/logout");
+
+      if (res.status === 200 || res.data.success) {
         localStorage.clear();
         dispatch(logoutUser());
-        toast.success("Logged out successfully!");
-        navigate("/signup");
-      } else {
-        toast.error("Logout failed!");
+        toast.success(res.data.message || "Logged out successfully!");
+        navigate("/signin");
       }
     } catch (error) {
       console.error("Error logging out:", error);
-      toast.error("An error occurred during logout!");
+      toast.error(error.response?.data?.message || "An error occurred during logout!");
     }
   };
 

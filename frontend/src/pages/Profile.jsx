@@ -6,6 +6,7 @@ import { setAuthUser } from "../../redux/userSlice";
 import MainSlideBar from "../component/main_SlideBar.jsx";
 import PageLoader from "../component/pagesLoader.jsx";
 import ErrorBoundary from "../component/ErrorBoundary";
+import { getProfilePhoto } from "../utils/getProfilePhoto";
 
 const Profile = () => {
   const [step, setStep] = useState(1);
@@ -232,185 +233,182 @@ const Profile = () => {
       </div>
     );
   }
-if (loading || step !== 2) {
-  return <PageLoader message="Preparing your profile..." />;
-}
+  if (loading || step !== 2) {
+    return <PageLoader message="Preparing your profile..." />;
+  }
   return (
-   <ErrorBoundary>
-    <div className="flex min-h-screen text-white">
-      <MainSlideBar />
+    <ErrorBoundary>
+      <div className="flex min-h-screen text-white">
+        <MainSlideBar />
 
-      <div className="flex-1 p-8 overflow-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-extrabold text-white/90 mb-2">
-              {userName}'s Profile
-            </h1>
-            <p className="text-white/60">Track your progress and connections</p>
-          </div>
+        <div className="flex-1 p-8 overflow-auto">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-4xl font-extrabold text-white/90 mb-2">
+                {userName}'s Profile
+              </h1>
+              <p className="text-white/60">Track your progress and connections</p>
+            </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-indigo-400">
-                {stats.totalCompleted}
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-indigo-400">
+                  {stats.totalCompleted}
+                </div>
+                <div className="text-sm text-white/60">Completed</div>
               </div>
-              <div className="text-sm text-white/60">Completed</div>
             </div>
           </div>
-        </div>
 
-        {/* Tabs */}
-        <div className="flex bg-white/60 p-1.5 rounded-full border w-full max-w-md mb-6">
-          <button
-            className={`flex-1 py-2.5 rounded-full ${
-              activeTab === "challenges" ? "bg-indigo-500 text-white" : "text-gray-500"
-            }`}
-            onClick={() => setActiveTab("challenges")}
-          >
-            Challenges
-          </button>
+          {/* Tabs */}
+          <div className="flex bg-white/60 p-1.5 rounded-full border w-full max-w-md mb-6">
+            <button
+              className={`flex-1 py-2.5 rounded-full ${activeTab === "challenges" ? "bg-indigo-500 text-white" : "text-gray-500"
+                }`}
+              onClick={() => setActiveTab("challenges")}
+            >
+              Challenges
+            </button>
 
-          <button
-            className={`flex-1 py-2.5 rounded-full ${
-              activeTab === "requests" ? "bg-indigo-500 text-white" : "text-gray-500"
-            }`}
-            onClick={() => setActiveTab("requests")}
-          >
-            Requests
-          </button>
+            <button
+              className={`flex-1 py-2.5 rounded-full ${activeTab === "requests" ? "bg-indigo-500 text-white" : "text-gray-500"
+                }`}
+              onClick={() => setActiveTab("requests")}
+            >
+              Requests
+            </button>
 
-          <button
-            className={`flex-1 py-2.5 rounded-full ${
-              activeTab === "connections" ? "bg-indigo-500 text-white" : "text-gray-500"
-            }`}
-            onClick={() => setActiveTab("connections")}
-          >
-            Connections
-          </button>
-        </div>
+            <button
+              className={`flex-1 py-2.5 rounded-full ${activeTab === "connections" ? "bg-indigo-500 text-white" : "text-gray-500"
+                }`}
+              onClick={() => setActiveTab("connections")}
+            >
+              Connections
+            </button>
+          </div>
 
-        {activeTab === "challenges" && (
-          <ChallengesSection
-            acceptedChallenges={acceptedChallenges}
-            completedPosts={completedPosts}
-            actionLoading={actionLoading}
-            onRequestProof={openProofModal}
-            onDrop={handleDropChallenge}
-          />
-        )}
+          {activeTab === "challenges" && (
+            <ChallengesSection
+              acceptedChallenges={acceptedChallenges}
+              completedPosts={completedPosts}
+              actionLoading={actionLoading}
+              onRequestProof={openProofModal}
+              onDrop={handleDropChallenge}
+            />
+          )}
 
-        {activeTab === "requests" && (
-          <RequestsSection
-            requests={connectionRequests}
-            onAccept={handleAcceptRequest}
-            onReject={handleRejectRequest}
-          />
-        )}
+          {activeTab === "requests" && (
+            <RequestsSection
+              requests={connectionRequests}
+              onAccept={handleAcceptRequest}
+              onReject={handleRejectRequest}
+            />
+          )}
 
-        {activeTab === "connections" && (
-          <ConnectionsSection connections={connections} />
-        )}
+          {activeTab === "connections" && (
+            <ConnectionsSection connections={connections} />
+          )}
 
-        {proofModalOpen && selectedChallenge && (
-          <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-            <div className="bg-white/90 dark:bg-slate-900 rounded-3xl shadow-2xl max-w-3xl w-full p-6 relative">
-              <button
-                onClick={closeProofModal}
-                className="absolute top-4 right-4 text-gray-700 hover:text-gray-900"
-                aria-label="Close proof modal"
-              >
-                ✕
-              </button>
-              <h2 className="text-lg font-bold mb-4 text-slate-900">Submit Proof for:&nbsp;
-                <span className="text-indigo-600">{selectedChallenge.challengeText || selectedChallenge.text}</span>
-              </h2>
-
-              <div className="flex gap-2 mb-4">
-                {['image', 'video', 'blog', 'link'].map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => { setProofType(type); setProofFile(null); setProofText(''); setProofURL(''); setProofPreview(''); }}
-                    className={`px-4 py-2 rounded-lg font-semibold ${proofType === type ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700'}`}
-                  >
-                    {type.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-
-              <div className="space-y-3 mb-4">
-                {(proofType === 'image' || proofType === 'video') && (
-                  <>
-                    <label className="block text-sm font-semibold text-slate-700">Upload {proofType === 'image' ? 'Image' : 'Video'} Proof</label>
-                    <input type="file" accept={proofType === 'image' ? 'image/*' : 'video/*'} onChange={onProofFileChange} className="block w-full border border-gray-200 rounded-lg p-2" />
-                    {proofPreview && (
-                      <div className="mt-2">
-                        {proofType === 'image' ? (
-                          <img src={proofPreview} alt="preview" className="max-h-52 w-full object-cover rounded-lg" />
-                        ) : (
-                          <video controls src={proofPreview} className="max-h-52 w-full rounded-lg" />
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {proofType === 'blog' && (
-                  <>
-                    <label className="block text-sm font-semibold text-slate-700">Blog proof (text)</label>
-                    <textarea
-                      value={proofText}
-                      onChange={(e) => setProofText(e.target.value)}
-                      rows={6}
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-indigo-300"
-                      placeholder="Share what you did and include key insights..."
-                    />
-                  </>
-                )}
-
-                {proofType === 'link' && (
-                  <>
-                    <label className="block text-sm font-semibold text-slate-700">Project link (GitHub / live demo / docs)</label>
-                    <input
-                      type="url"
-                      value={proofURL}
-                      onChange={(e) => setProofURL(e.target.value)}
-                      placeholder="https://..."
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-indigo-300"
-                    />
-                  </>
-                )}
-
-                <label className="block text-sm font-semibold text-slate-700">Description</label>
-                <textarea
-                  value={proofDescription}
-                  onChange={(e) => setProofDescription(e.target.value)}
-                  rows={3}
-                  className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-indigo-300"
-                  placeholder="Explain what you completed and include outcome details."
-                />
-              </div>
-
-              <div className="flex justify-end gap-3">
+          {proofModalOpen && selectedChallenge && (
+            <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+              <div className="bg-white/90 dark:bg-slate-900 rounded-3xl shadow-2xl max-w-3xl w-full p-6 relative">
                 <button
                   onClick={closeProofModal}
-                  className="px-4 py-2 border border-gray-300 text-slate-700 rounded-lg hover:bg-gray-100"
+                  className="absolute top-4 right-4 text-gray-700 hover:text-gray-900"
+                  aria-label="Close proof modal"
                 >
-                  Cancel
+                  ✕
                 </button>
-                <button
-                  onClick={handleProofSubmit}
-                  disabled={proofSubmitting}
-                  className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
-                >
-                  {proofSubmitting ? 'Submitting...' : 'Submit Proof & Post'}
-                </button>
+                <h2 className="text-lg font-bold mb-4 text-slate-900">Submit Proof for:&nbsp;
+                  <span className="text-indigo-600">{selectedChallenge.challengeText || selectedChallenge.text}</span>
+                </h2>
+
+                <div className="flex gap-2 mb-4">
+                  {['image', 'video', 'blog', 'link'].map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => { setProofType(type); setProofFile(null); setProofText(''); setProofURL(''); setProofPreview(''); }}
+                      className={`px-4 py-2 rounded-lg font-semibold ${proofType === type ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                    >
+                      {type.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-3 mb-4">
+                  {(proofType === 'image' || proofType === 'video') && (
+                    <>
+                      <label className="block text-sm font-semibold text-slate-700">Upload {proofType === 'image' ? 'Image' : 'Video'} Proof</label>
+                      <input type="file" accept={proofType === 'image' ? 'image/*' : 'video/*'} onChange={onProofFileChange} className="block w-full border border-gray-200 rounded-lg p-2" />
+                      {proofPreview && (
+                        <div className="mt-2">
+                          {proofType === 'image' ? (
+                            <img src={proofPreview} alt="preview" className="max-h-52 w-full object-cover rounded-lg" />
+                          ) : (
+                            <video controls src={proofPreview} className="max-h-52 w-full rounded-lg" />
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {proofType === 'blog' && (
+                    <>
+                      <label className="block text-sm font-semibold text-slate-700">Blog proof (text)</label>
+                      <textarea
+                        value={proofText}
+                        onChange={(e) => setProofText(e.target.value)}
+                        rows={6}
+                        className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-indigo-300"
+                        placeholder="Share what you did and include key insights..."
+                      />
+                    </>
+                  )}
+
+                  {proofType === 'link' && (
+                    <>
+                      <label className="block text-sm font-semibold text-slate-700">Project link (GitHub / live demo / docs)</label>
+                      <input
+                        type="url"
+                        value={proofURL}
+                        onChange={(e) => setProofURL(e.target.value)}
+                        placeholder="https://..."
+                        className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-indigo-300"
+                      />
+                    </>
+                  )}
+
+                  <label className="block text-sm font-semibold text-slate-700">Description</label>
+                  <textarea
+                    value={proofDescription}
+                    onChange={(e) => setProofDescription(e.target.value)}
+                    rows={3}
+                    className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-indigo-300"
+                    placeholder="Explain what you completed and include outcome details."
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={closeProofModal}
+                    className="px-4 py-2 border border-gray-300 text-slate-700 rounded-lg hover:bg-gray-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleProofSubmit}
+                    disabled={proofSubmitting}
+                    className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
+                  >
+                    {proofSubmitting ? 'Submitting...' : 'Submit Proof & Post'}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
-  </ErrorBoundary>
+    </ErrorBoundary>
   );
 };
 const ChallengesSection = ({ acceptedChallenges, completedPosts, onRequestProof, onDrop, actionLoading }) => {
@@ -419,13 +417,13 @@ const ChallengesSection = ({ acceptedChallenges, completedPosts, onRequestProof,
   return (
     <div className="space-y-6">
       <div className="flex gap-4 border-b border-white/20 pb-4">
-        <button 
+        <button
           className={`pb-2 font-bold px-2 ${subTab === 'ongoing' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-white/60'}`}
           onClick={() => setSubTab('ongoing')}
         >
           Ongoing ({acceptedChallenges.filter(c => c.status === 'active').length})
         </button>
-        <button 
+        <button
           className={`pb-2 font-bold px-2 ${subTab === 'completed' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-white/60'}`}
           onClick={() => setSubTab('completed')}
         >
@@ -452,7 +450,7 @@ const ChallengesSection = ({ acceptedChallenges, completedPosts, onRequestProof,
                 </div>
               </div>
               <div className="w-full bg-white/20 rounded-full h-2">
-                <div 
+                <div
                   className="bg-indigo-500 h-2 rounded-full transition-all duration-300"
                   style={{
                     width: `${Math.min(100, ((Date.now() - new Date(challenge.acceptedAt)) / (challenge.timelineDays * 24 * 60 * 60 * 1000)) * 100)}%`
@@ -494,20 +492,20 @@ const ChallengesSection = ({ acceptedChallenges, completedPosts, onRequestProof,
                     Completed on {new Date(post.createdAt).toLocaleDateString()}
                   </p>
                   {post.proofType === 'image' && (
-                    <img 
-                      src={`http://localhost:5005${post.proofUrl}`} 
-                      alt="Proof" 
-                      className="w-full max-w-md h-48 object-cover rounded-xl border border-white/20" 
+                    <img
+                      src={`http://localhost:5005${post.proofUrl}`}
+                      alt="Proof"
+                      className="w-full max-w-md h-48 object-cover rounded-xl border border-white/20"
                     />
                   )}
                   {post.proofType === 'video' && (
                     <video controls src={`http://localhost:5005${post.proofUrl}`} className="w-full max-w-md h-48 rounded-xl border border-white/20" />
                   )}
                   {post.proofType === 'link' && (
-                    <a 
-                      href={post.proofUrl} 
-                      target="_blank" 
-                      rel="noreferrer" 
+                    <a
+                      href={post.proofUrl}
+                      target="_blank"
+                      rel="noreferrer"
                       className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition"
                     >
                       View Proof Link
@@ -538,9 +536,9 @@ const RequestsSection = ({ requests, onAccept, onReject }) => {
             <div key={user._id} className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <img
-                  src={user.profilePhoto || "https://avatar.iran.liara.run/public"}
+                  src={getProfilePhoto(user.profilePhoto, user.username)}
                   alt="avatar"
-                  className="w-12 h-12 rounded-full bg-black/20"
+                  className="w-12 h-12 rounded-full bg-black/20 object-cover"
                 />
                 <div>
                   <h4 className="text-white/90 font-bold">{user.fullName}</h4>
@@ -577,9 +575,9 @@ const RequestsSection = ({ requests, onAccept, onReject }) => {
           {requests.sent.map((user) => (
             <div key={user._id} className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 flex items-center">
               <img
-                src={user.profilePhoto || "https://avatar.iran.liara.run/public"}
+                src={getProfilePhoto(user.profilePhoto, user.username)}
                 alt="avatar"
-                className="w-12 h-12 rounded-full bg-black/20 mr-3"
+                className="w-12 h-12 rounded-full bg-black/20 mr-3 object-cover"
               />
               <div>
                 <h4 className="text-white/90 font-bold">{user.fullName}</h4>
@@ -608,9 +606,9 @@ const ConnectionsSection = ({ connections }) => {
         {connections.map((user) => (
           <div key={user._id} className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 flex items-center gap-3">
             <img
-              src={user.profilePhoto || "https://avatar.iran.liara.run/public"}
+              src={getProfilePhoto(user.profilePhoto, user.username)}
               alt="avatar"
-              className="w-16 h-16 rounded-full bg-black/20"
+              className="w-16 h-16 rounded-full bg-black/20 object-cover"
             />
             <div>
               <h4 className="text-white/90 font-bold">{user.fullName}</h4>

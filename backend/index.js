@@ -16,6 +16,7 @@ import connectionRoutes from "./routes/connectionRoutes.js";
 import communityRoutes from "./routes/communityRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 import { app, server } from "./socket/socket.js";
 
 dotenv.config();
@@ -54,6 +55,7 @@ app.use("/api/v1/connections", connectionRoutes);
 app.use("/api/v1/communities", communityRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/report", reportRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1", newsRoutes);
 
 // Catch-all 404 handler

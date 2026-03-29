@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import { User } from "../models/userModel.js";
+import { Notification } from "../models/Notification.js";
+import { io, getReceiverSocketId } from "../socket/socket.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import multer from "multer";
@@ -124,7 +126,7 @@ export const login = async (req, res) => {
 export const logout = (req, res) => {
     try {
         res.cookie("token", "", { maxAge: 0 });
-        return res.status(200).json({ message: "Logged out successfully" });
+        return res.status(200).json({ message: "Logged out successfully", success: true });
     } catch (error) {
         console.error("Logout Error:", error);
         return res.status(500).json({ message: "Server Error" });
@@ -322,6 +324,25 @@ export const toggleFollow = async (req, res) => {
 
         await currentUser.save();
         await targetUser.save();
+
+        if (!isFollowing) {
+            // Create notification for follow
+            try {
+                const notification = await Notification.create({
+                    sender: currentUserId,
+                    receiver: targetUserId,
+                    type: "follow",
+                });
+                
+                const populatedNotif = await Notification.findById(notification._id).populate("sender", "fullName username profilePhoto");
+                const receiverSocketId = getReceiverSocketId(targetUserId);
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit("newNotification", populatedNotif);
+                }
+            } catch (err) {
+                console.error("Error creating follow notification:", err.message);
+            }
+        }
 
         return res.status(200).json({ 
             message: isFollowing ? "Unfollowed successfully" : "Followed successfully", 

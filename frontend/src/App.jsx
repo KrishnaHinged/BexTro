@@ -23,6 +23,7 @@ import Community from "./pages/Community";
 import { setSocket } from "../redux/socketSlice";
 import { setOnlineUser } from "../redux/userSlice";
 import { themes } from "./utils/theme";
+import { ROOT_URL } from "./utils/axiosInstance";
 
 import UserExperience from "./component/home/userExperience";
 import Navbar from "./component/home/Navbar.jsx";
@@ -34,16 +35,14 @@ import Footer from "./component/home/Footer";
 import Loader_2 from "./component/home/Loader2";
 import DailyQuotes from "./component/dashboard_tab/dailyQuotes";
 import FadeInWhenVisible from "./component/common/FadeInWhenVisible";
+import { toast } from "react-hot-toast";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.user.isAuthenticated);
   const isRehydrated = useSelector((state) => state._persist?.rehydrated);
 
-  console.log("ProtectedRoute: isAuthenticated =", isAuthenticated, "isRehydrated =", isRehydrated);
-
   if (!isRehydrated) {
-    console.log("ProtectedRoute: Not rehydrated, showing loading spinner");
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-50">
         <div className="loading loading-spinner text-info w-16 h-16"></div>
@@ -52,7 +51,6 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    console.log("ProtectedRoute: Not authenticated, showing login prompt");
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-50">
         <div className="bg-white/40 backdrop-blur-md rounded-3xl p-8 shadow-sm border border-white/60 text-center">
@@ -66,7 +64,6 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  console.log("ProtectedRoute: Authenticated, rendering children");
   return children;
 };
 
@@ -101,7 +98,7 @@ const App = () => {
   // Initialize Socket.IO
   useEffect(() => {
     if (isAuthenticated && user) {
-      const socket = io("http://localhost:5005", {
+      const socket = io(ROOT_URL, {
         withCredentials: true,
         query: { userId: user._id },
       });
@@ -114,6 +111,20 @@ const App = () => {
 
       socket.on("onlineUsers", (onlineUsers) => {
         dispatch(setOnlineUser(onlineUsers));
+      });
+
+      socket.on("newNotification", (notification) => {
+        const message = notification.type === "follow" 
+          ? `${notification.sender.username} followed you!` 
+          : notification.type === "like" 
+          ? `${notification.sender.username} liked your post!` 
+          : `${notification.sender.username} commented on your post!`;
+        
+        toast.success(message, {
+          icon: '🔔',
+          duration: 4000,
+          position: 'top-right',
+        });
       });
 
       socket.on("connect_error", (error) => {

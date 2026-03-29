@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { addMessage } from "../../redux/messageSlice";
+import { addMessage, markMessagesAsSeen } from "../../redux/messageSlice";
 
 const useGetRealTimeMessage = () => {
   const { socket } = useSelector(store => store.socket);
@@ -8,13 +8,19 @@ const useGetRealTimeMessage = () => {
 
   useEffect(() => {
     const handleNewMessage = (newMessage) => {
-      dispatch(addMessage(newMessage)); // Use addMessage instead of setMessages
+      dispatch(addMessage(newMessage));
+    };
+
+    const handleMessagesSeen = ({ receiverId }) => {
+        dispatch(markMessagesAsSeen({ receiverId }));
     };
 
     socket?.on("newMessage", handleNewMessage);
+    socket?.on("messagesSeen", handleMessagesSeen);
 
     return () => {
       socket?.off("newMessage", handleNewMessage);
+      socket?.off("messagesSeen", handleMessagesSeen);
     };
   }, [socket, dispatch]);
 };

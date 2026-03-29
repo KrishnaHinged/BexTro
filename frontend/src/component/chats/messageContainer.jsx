@@ -3,19 +3,36 @@ import SendMessage from "./SendMessage";
 import Messages from "./Messages";
 import { useDispatch, useSelector } from "react-redux";
 import { setSelectedUser } from "../../../redux/userSlice";
+import { ROOT_URL } from "../../utils/axiosInstance";
 
 const MessageContainer = () => {
   const dispatch = useDispatch();
-  const { selectedUser } = useSelector((store) => store.user); // Moved above useEffect
+  const { selectedUser, authUser, onlineUsers } = useSelector((store) => store.user);
+  const { socket } = useSelector((store) => store.socket);
+  const [isTyping, setIsTyping] = [React.useState(false)]; // Local typing state
 
   useEffect(() => {
-    return () => dispatch(setSelectedUser(null));
-  }, [dispatch]); // Removed `selectedUser` from dependency array to prevent unnecessary re-renders
+    if (socket && selectedUser) {
+        socket.on("typingStatus", ({ senderId, isTyping }) => {
+            if (senderId === selectedUser._id) {
+                setIsTyping(isTyping);
+            }
+        });
+
+        // Emit 'markAsSeen' when conversation opens
+        socket.emit("markAsSeen", { senderId: selectedUser._id, receiverId: authUser?._id });
+
+        return () => {
+            socket.off("typingStatus");
+            dispatch(setSelectedUser(null));
+        };
+    }
+  }, [dispatch, socket, selectedUser, authUser?._id]);
 
   const profilePhotoUrl = selectedUser?.profilePhoto?.startsWith("http")
     ? selectedUser.profilePhoto
     : selectedUser?.profilePhoto
-    ? `http://localhost:5005${selectedUser.profilePhoto}`
+    ? `${ROOT_URL}${selectedUser.profilePhoto}`
     : "https://via.placeholder.com/150";
 
   if (!selectedUser) {
@@ -45,7 +62,18 @@ const MessageContainer = () => {
           <p className="text-lg font-semibold text-white group-hover:text-indigo-300 transition-colors duration-200">
             {selectedUser?.fullName || "Unknown User"}
           </p>
-        
+          <div className="flex items-center gap-2">
+            {isTyping ? (
+                <span className="text-xs text-indigo-400 animate-pulse font-medium">typing...</span>
+            ) : (
+                <>
+                    <div className={`w-2 h-2 rounded-full ${onlineUsers?.includes(selectedUser?._id) ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-gray-500'}`}></div>
+                    <span className="text-xs text-gray-400 capitalize">
+                        {onlineUsers?.includes(selectedUser?._id) ? 'Online' : 'Offline'}
+                    </span>
+                </>
+            )}
+          </div>
         </div>
       </header>
       <Messages />

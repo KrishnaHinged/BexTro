@@ -57,6 +57,8 @@ const userSchema = new mongoose.Schema(
             totalCompleted: { type: Number, default: 0 },
             totalAbandoned: { type: Number, default: 0 },
         },
+        lastSeen: { type: Date, default: Date.now },
+        isOnline: { type: Boolean, default: false },
     },
     { timestamps: true }
 );

@@ -1,31 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
+import axiosInstance, { ROOT_URL } from "../../utils/axiosInstance";
 
 const ProfileTab = ({ onLogout }) => {
   const [profileData, setProfileData] = useState({ fullName: "", username: "", profilePhoto: "" });
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch("http://localhost:5005/api/v1/user/profile", {
-          credentials: "include",
-        });
-  
-        if (response.status === 401) {
-          console.warn("User not logged in, skipping profile fetch.");
-          return; // Stop execution if unauthorized
-        }
-  
-        if (!response.ok) throw new Error("Failed to fetch profile");
-  
-        const data = await response.json();
-        setProfileData(data);
-        setPreviewUrl(data.profilePhoto);
+        const res = await axiosInstance.get("/user/profile");
+        setProfileData(res.data);
+        setPreviewUrl(res.data.profilePhoto);
       } catch (error) {
         console.error("Fetch Profile Error:", error);
-        // toast.error("Failed to load profile!");
+        // Unauthorized is handled by the interceptor or protected route usually
       }
     };
   
@@ -43,16 +34,7 @@ const ProfileTab = ({ onLogout }) => {
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
-
-    // Check if user is logged in before updating
-    const responseCheck = await fetch("http://localhost:5005/api/v1/user/profile", {
-        credentials: "include",
-    });
-
-    if (!responseCheck.ok) {
-        // toast.error("You are not logged in. Please log in again.");
-        return;
-    }
+    setLoading(true);
 
     try {
         const formData = new FormData();
@@ -62,58 +44,45 @@ const ProfileTab = ({ onLogout }) => {
             formData.append("profilePhoto", selectedFile);
         }
 
-        const response = await fetch("http://localhost:5005/api/v1/user/profile", {
-            method: "PUT",
-            credentials: "include",
-            body: formData,
+        const res = await axiosInstance.put("/user/profile", formData, {
+            headers: { "Content-Type": "multipart/form-data" }
         });
 
-        const result = await response.json();
-        if (response.ok) {
-            toast.success(result.message || "Profile updated successfully!");
-            setProfileData(result.user);
-            setSelectedFile(null);
-        } else {
-            throw new Error(result.message || "Failed to update profile");
-        }
+        toast.success(res.data.message || "Profile updated successfully!");
+        setProfileData(res.data.user);
+        setSelectedFile(null);
     } catch (error) {
         console.error("Update Profile Error:", error);
-        toast.error(error.message || "An error occurred!");
+        toast.error(error.response?.data?.message || "An error occurred!");
+    } finally {
+        setLoading(false);
     }
 };
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("http://localhost:5005/api/v1/user/logout", {
-        method: "POST",
-        credentials: "include",
-      });
+      const res = await axiosInstance.post("/user/logout");
 
-      const result = await response.json();
-      if (response.ok) {
-        toast.success(result.message || "Logged out successfully!");
+      if (res.status === 200 || res.data.success) {
+        toast.success(res.data.message || "Logged out successfully!");
 
-        // **Clear all profile-related state after logout**
         setProfileData({ fullName: "", username: "", profilePhoto: "" });
         setSelectedFile(null);
         setPreviewUrl("");
 
-        // **Call the logout handler to clear authentication state**
         if (onLogout) {
           onLogout();
         }
-      } else {
-        throw new Error(result.message || "Failed to logout");
       }
     } catch (error) {
       console.error("Logout Error:", error);
-      toast.error(error.message || "An error occurred during logout!");
+      toast.error(error.response?.data?.message || "An error occurred during logout!");
     }
   };
 
   return (
     <div >
-      <h2 className="text-2xl font-semibold text-gray-800 mb-6">Profile</h2>
+      <h2 className="text-2xl font-semibold text-gray-800 mb-6 font-primary">Profile</h2>
       <form onSubmit={handleProfileUpdate} className="space-y-4">
         <div>
           <label className="block text-gray-800 font-medium mb-1">Full Name</label>
@@ -121,7 +90,7 @@ const ProfileTab = ({ onLogout }) => {
             type="text"
             value={profileData.fullName}
             onChange={(e) => setProfileData({ ...profileData, fullName: e.target.value })}
-            className="w-full p-3 border text-gray-800 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full p-3 border text-gray-800 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/50"
           />
         </div>
         <div>
@@ -130,7 +99,7 @@ const ProfileTab = ({ onLogout }) => {
             type="text"
             value={profileData.username}
             onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-            className="w-full p-3 border text-gray-800 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full p-3 border text-gray-800 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white/50"
           />
         </div>
         <div>
@@ -139,28 +108,32 @@ const ProfileTab = ({ onLogout }) => {
             type="file"
             accept="image/jpeg,image/jpg,image/png"
             onChange={handleFileChange}
-            className="w-full p-2 border text-gray-800 border-gray-200 rounded-lg"
+            className="w-full p-2 border text-gray-800 border-gray-200 rounded-lg bg-white/50"
           />
           {previewUrl && (
             <div className="mt-2">
               <img
-                src={previewUrl.startsWith("http") ? previewUrl : `http://localhost:5005${previewUrl}`}
+                src={previewUrl.startsWith("blob") ? previewUrl : previewUrl.startsWith("http") ? previewUrl : `${ROOT_URL}${previewUrl}`}
                 alt="Profile Preview"
-                className="w-24 h-24 rounded-full object-cover border text-white/70 border-gray-200"
+                className="w-24 h-24 rounded-full object-cover border border-gray-200 shadow-sm"
               />
             </div>
           )}
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 pt-4">
           <button
             type="submit"
-            className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+            disabled={loading}
+            className={`px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-bold shadow-lg transition-all ${
+                loading ? "opacity-70 cursor-not-allowed" : "hover:bg-indigo-700 hover:scale-105 active:scale-95"
+            }`}
           >
-            Update Profile
+            {loading ? "Updating..." : "Update Profile"}
           </button>
           <button
+            type="button"
             onClick={handleLogout}
-            className="px-6 py-2 bg-rose-600 text-white rounded-lg font-medium hover:bg-rose-700 transition-colors"
+            className="px-6 py-2.5 bg-rose-500 text-white rounded-lg font-bold shadow-lg hover:bg-rose-600 transition-all hover:scale-105 active:scale-95"
           >
             Logout
           </button>

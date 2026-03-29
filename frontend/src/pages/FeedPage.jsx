@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import SkeletonCard from '../component/SkeletonCard';
-import axios from 'axios';
+import axiosInstance from '../utils/axiosInstance';
 import Masonry from 'react-masonry-css';
 import PostCard from '../component/PostCard';
 import ErrorBoundary from '../component/ErrorBoundary';
@@ -10,7 +10,6 @@ import Navbar from '../component/home/Navbar.jsx';
 import MainSlideBar from "../component/main_SlideBar";
 import PageLoader from "../component/pagesLoader";
 import { motion, AnimatePresence } from "framer-motion";
-const API_URL = "http://localhost:5005/api/v1";
 
 const FeedPage = () => {
     const { authUser: user, isAuthenticated } = useSelector(store => store.user);
@@ -25,16 +24,46 @@ const FeedPage = () => {
         console.log("Fetching feed for tab:", tab);
         setLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/posts/feed?tab=${tab}`, { withCredentials: true });
+            const res = await axiosInstance.get(`/posts/feed?tab=${tab}`);
             console.log("Feed response:", res.data);
             setPosts(res.data || []);
         } catch (error) {
             console.error("Error fetching feed", error);
-            setPosts([]); // Set empty array on error
+            setPosts([]);
         } finally {
             setLoading(false);
         }
     };
+
+    const { socket } = useSelector(store => store.socket);
+
+    useEffect(() => {
+        if (socket) {
+            // Live Feed: New Post Listener
+            socket.on("newPost", (newPost) => {
+                setPosts(prev => [newPost, ...prev]);
+            });
+
+            // Live Feed: Like/Comment Listener
+            socket.on("postUpdate", ({ postId, likes, comments, type }) => {
+                setPosts(prev => prev.map(post => {
+                    if (post._id === postId) {
+                        return {
+                            ...post,
+                            likes: type === "like" ? likes : post.likes,
+                            comments: type === "comment" ? comments : post.comments
+                        };
+                    }
+                    return post;
+                }));
+            });
+
+            return () => {
+                socket.off("newPost");
+                socket.off("postUpdate");
+            };
+        }
+    }, [socket]);
 
     useEffect(() => {
         console.log("FeedPage useEffect triggered, user:", user);
@@ -88,13 +117,13 @@ const FeedPage = () => {
 
                     {/* Header */}
                     <h1 className="text-3xl md:text-4xl font-bold text-white/80 mb-8">
-                        Community Feed <span className="text-blue-500">✨</span>
+                        Community Feed
                     </h1>
 
                     {/* Tabs Card (Glass Style like Dashboard cards) */}
-                    <div className="bg-white/40 backdrop-blur-md rounded-3xl p-6 shadow-sm border border-white/60 mb-8 flex flex-col items-center">
+                    <div className="backdrop-blur-md rounded-3xl p-6 mb-8 flex flex-col items-center">
 
-                        <div className="flex bg-white/60 p-1.5 rounded-full border w-72">
+                        <div className="flex bg-white/60 p-1.5 rounded-full w-72">
                             <button
                                 className={`flex-1 py-2.5 rounded-full transition ${activeTab === 'foryou'
                                         ? 'bg-indigo-500 text-white'

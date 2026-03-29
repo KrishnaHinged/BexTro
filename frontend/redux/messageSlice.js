@@ -16,8 +16,19 @@ const messageSlice = createSlice({
         state.messages = [action.payload];
       }
     },
+    markMessagesAsSeen: (state, action) => {
+      const { receiverId } = action.payload;
+      if (state.messages) {
+          state.messages = state.messages.map(msg => {
+              if (String(msg.receiverId) === String(receiverId)) {
+                  return { ...msg, isSeen: true };
+              }
+              return msg;
+          });
+      }
+    }
   },
 });
 
-export const { setMessages, addMessage } = messageSlice.actions;
+export const { setMessages, addMessage, markMessagesAsSeen } = messageSlice.actions;
 export default messageSlice.reducer;
