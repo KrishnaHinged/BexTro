@@ -1,7 +1,8 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setMessages } from "../../redux/messageSlice";
+import { setMessages } from "../redux/messageSlice";
+import { ROOT_URL } from "../api/axios";
 
 const useGetMessages = () => {
   const { selectedUser } = useSelector((store) => store.user);
@@ -11,7 +12,6 @@ const useGetMessages = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       if (!selectedUser?._id) {
-        console.warn("No selected user, skipping message fetch.");
         dispatch(setMessages([]));
         return;
       }
@@ -19,19 +19,19 @@ const useGetMessages = () => {
       try {
         setLoading(true);
         const endpoint = selectedUser.isCommunity 
-            ? `http://localhost:5005/api/v1/message/community/${selectedUser._id}`
-            : `http://localhost:5005/api/v1/message/${selectedUser._id}`;
+            ? `${ROOT_URL}/api/v1/message/community/${selectedUser._id}`
+            : `${ROOT_URL}/api/v1/message/${selectedUser._id}`;
             
         const res = await axios.get(endpoint, {
           withCredentials: true,
         });
         dispatch(setMessages(res.data || []));
       } catch (error) {
-        console.error("Error fetching messages:", {
-          status: error.response?.status,
-          data: error.response?.data,
-          message: error.message,
-        });
+        if (error.response?.status === 403) {
+            console.warn("Status 403: Messaging restricted between these users.");
+        } else {
+            console.error("Error fetching messages:", error.message);
+        }
         dispatch(setMessages([]));
       } finally {
         setLoading(false);

@@ -2,18 +2,22 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { setAuthUser } from "../../redux/userSlice";
-import MainSlideBar from "../component/main_SlideBar.jsx";
-import PageLoader from "../component/pagesLoader.jsx";
-import ErrorBoundary from "../component/ErrorBoundary";
+import axiosInstance, { ROOT_URL } from '../api/axios';
+import RewardPopup from '../components/features/posts/RewardPopup.jsx';
+import { setAuthUser } from "../redux/userSlice";
+import MainSlideBar from "../components/layout/MainSlideBar.jsx";
+import PageLoader from "../components/common/loaders/pagesLoader.jsx";
+import ErrorBoundary from "../components/common/ErrorBoundary";
 import { getProfilePhoto } from "../utils/getProfilePhoto";
+import { motion } from "framer-motion";
 
 const Profile = () => {
-  const [step, setStep] = useState(1);
   const [activeTab, setActiveTab] = useState("challenges");
   const [connectionRequests, setConnectionRequests] = useState({ received: [], sent: [] });
   const [connections, setConnections] = useState([]);
   const [completedPosts, setCompletedPosts] = useState([]);
+  const [proofVisibility, setProofVisibility] = useState("public");
+  const [rewardData, setRewardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -58,16 +62,9 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => setStep(2), 3000);
-
     if (isAuthenticated && authUser) {
       fetchProfileData();
-    } else {
-      console.log("User not authenticated or authUser not available");
-      setLoading(false);
     }
-
-    return () => clearTimeout(timer);
   }, [dispatch, authUser?._id, isAuthenticated]);
 
   const [proofModalOpen, setProofModalOpen] = useState(false);
@@ -87,6 +84,7 @@ const Profile = () => {
     setProofURL("");
     setProofDescription("");
     setProofPreview("");
+    setProofVisibility("public");
     setSelectedChallenge(null);
   };
 
@@ -99,6 +97,7 @@ const Profile = () => {
     setProofURL("");
     setProofDescription("");
     setProofPreview("");
+    setProofVisibility("public");
   };
 
   const closeProofModal = () => {
@@ -148,6 +147,7 @@ const Profile = () => {
       if (selectedChallenge._id) formData.append("challengeId", selectedChallenge._id);
       formData.append("proofType", proofType);
       formData.append("description", proofDescription.trim());
+      formData.append("visibility", proofVisibility);
       formData.append("timelineTaken", selectedChallenge.timelineDays || 0);
 
       if (proofType === "image" || proofType === "video") {
@@ -159,21 +159,26 @@ const Profile = () => {
       }
 
       const response = await axios.post("http://localhost:5005/api/v1/posts/create", formData, {
-        withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true,
       });
 
-      if (response.status === 201) {
-        toast.success("Challenge proof submitted and post created!");
-        closeProofModal();
-        await fetchProfileData();
-        window.dispatchEvent(new Event("bextroFeedRefresh"));
-      } else {
-        toast.error(response.data?.message || "Failed to submit proof");
+      toast.success("Challenge proof submitted!");
+      
+      // Update local posts
+      setCompletedPosts([response.data.post, ...completedPosts]);
+      
+      // Handle Rewards
+      if (response.data.rewards) {
+        setRewardData(response.data.rewards);
       }
+
+      closeProofModal();
+      await fetchProfileData();
+      window.dispatchEvent(new Event("bextroFeedRefresh"));
     } catch (error) {
       console.error("Proof submission error", error);
-      toast.error("Failed to submit proof. Please try again.");
+      toast.error(error.response?.data?.message || "Failed to submit proof. Please try again.");
     } finally {
       setProofSubmitting(false);
     }
@@ -215,6 +220,22 @@ const Profile = () => {
     }
   };
 
+  const handleToggleVisibility = async (postId, currentVisibility) => {
+    try {
+      const newVisibility = currentVisibility === "public" ? "private" : "public";
+      await axios.put(`http://localhost:5005/api/v1/posts/${postId}/visibility`, { visibility: newVisibility }, { withCredentials: true });
+      toast.success(`Post is now ${newVisibility === 'private' ? 'Private' : 'Public'}`);
+      
+      // Update local state
+      setCompletedPosts(prev => prev.map(post => 
+        post._id === postId ? { ...post, visibility: newVisibility } : post
+      ));
+    } catch (error) {
+      console.error("Error toggling visibility:", error);
+      toast.error("Failed to update visibility");
+    }
+  };
+
   if (!isRehydrated) {
     return <PageLoader message="Loading profile..." />;
   }
@@ -233,7 +254,7 @@ const Profile = () => {
       </div>
     );
   }
-  if (loading || step !== 2) {
+  if (loading) {
     return <PageLoader message="Preparing your profile..." />;
   }
   return (
@@ -242,23 +263,14 @@ const Profile = () => {
         <MainSlideBar />
 
         <div className="flex-1 p-8 overflow-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-4xl font-extrabold text-white/90 mb-2">
-                {userName}'s Profile
-              </h1>
-              <p className="text-white/60">Track your progress and connections</p>
-            </div>
+          <Header
+            user={authUser}
+            onUpdateProfile={() => {}}
+            connectionRequests={connectionRequests}
+            connections={connections}
+          />
 
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-indigo-400">
-                  {stats.totalCompleted}
-                </div>
-                <div className="text-sm text-white/60">Completed</div>
-              </div>
-            </div>
-          </div>
+          <GamificationUI user={authUser} />
 
           {/* Tabs */}
           <div className="flex bg-white/60 p-1.5 rounded-full border w-full max-w-md mb-6">
@@ -287,27 +299,30 @@ const Profile = () => {
             </button>
           </div>
 
-          {activeTab === "challenges" && (
-            <ChallengesSection
-              acceptedChallenges={acceptedChallenges}
-              completedPosts={completedPosts}
-              actionLoading={actionLoading}
-              onRequestProof={openProofModal}
-              onDrop={handleDropChallenge}
-            />
-          )}
+          <div className="mt-8">
+            {activeTab === "challenges" && (
+              <ChallengesSection
+                acceptedChallenges={acceptedChallenges}
+                completedPosts={completedPosts}
+                actionLoading={actionLoading}
+                onRequestProof={openProofModal}
+                onDrop={handleDropChallenge}
+                onToggleVisibility={handleToggleVisibility}
+              />
+            )}
 
-          {activeTab === "requests" && (
-            <RequestsSection
-              requests={connectionRequests}
-              onAccept={handleAcceptRequest}
-              onReject={handleRejectRequest}
-            />
-          )}
+            {activeTab === "requests" && (
+              <RequestsSection
+                requests={connectionRequests}
+                onAccept={handleAcceptRequest}
+                onReject={handleRejectRequest}
+              />
+            )}
 
-          {activeTab === "connections" && (
-            <ConnectionsSection connections={connections} />
-          )}
+            {activeTab === "connections" && (
+              <ConnectionsSection connections={connections} />
+            )}
+          </div>
 
           {proofModalOpen && selectedChallenge && (
             <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
@@ -328,14 +343,38 @@ const Profile = () => {
                     <button
                       key={type}
                       onClick={() => { setProofType(type); setProofFile(null); setProofText(''); setProofURL(''); setProofPreview(''); }}
-                      className={`px-4 py-2 rounded-lg font-semibold ${proofType === type ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                      className={`px-4 py-2 rounded-lg font-semibold transition ${proofType === type ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                     >
                       {type.toUpperCase()}
                     </button>
                   ))}
                 </div>
 
-                <div className="space-y-3 mb-4">
+                <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100/50 mb-4">
+                  <label className="text-indigo-900 font-bold text-sm mb-3 block pl-1 flex items-center gap-2">
+                    Post Visibility <span className="text-base">🔐</span>
+                  </label>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setProofVisibility('public')}
+                      className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${proofVisibility === 'public' ? 'border-indigo-500 bg-white shadow-sm ring-2 ring-indigo-50 text-indigo-700' : 'border-transparent text-gray-400 bg-white/40 hover:bg-white/60'}`}
+                    >
+                      <span className="text-lg">🌐</span>
+                      <span className="text-xs font-bold uppercase tracking-tight">Public Feed</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProofVisibility('private')}
+                      className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${proofVisibility === 'private' ? 'border-indigo-500 bg-white shadow-sm ring-2 ring-indigo-50 text-indigo-700' : 'border-transparent text-gray-400 bg-white/40 hover:bg-white/60'}`}
+                    >
+                      <span className="text-lg">🔒</span>
+                      <span className="text-xs font-bold uppercase tracking-tight">Only Me</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-4 mb-4">
                   {(proofType === 'image' || proofType === 'video') && (
                     <>
                       <label className="block text-sm font-semibold text-slate-700">Upload {proofType === 'image' ? 'Image' : 'Video'} Proof</label>
@@ -408,10 +447,104 @@ const Profile = () => {
           )}
         </div>
       </div>
+
+      {/* REWARD POPUP */}
+      {rewardData && (
+        <RewardPopup 
+          rewards={rewardData} 
+          onClose={() => {
+            setRewardData(null);
+            fetchProfileData(); // Refresh XP/Level/Streak in header
+          }} 
+        />
+      )}
     </ErrorBoundary>
   );
 };
-const ChallengesSection = ({ acceptedChallenges, completedPosts, onRequestProof, onDrop, actionLoading }) => {
+
+const Header = ({ user }) => (
+  <div className="flex items-center justify-between mb-8 bg-white/5 p-6 rounded-3xl border border-white/10">
+    <div className="flex items-center gap-4">
+      <img 
+        src={user.profilePhoto ? (user.profilePhoto.startsWith('http') ? user.profilePhoto : `${ROOT_URL}${user.profilePhoto}`) : `https://ui-avatars.com/api/?name=${user.username}&background=6366f1&color=fff`} 
+        alt="Profile" 
+        className="w-20 h-20 rounded-full border-4 border-indigo-500/20 object-cover" 
+      />
+      <div>
+        <h1 className="text-3xl font-bold">{user.fullName}</h1>
+        <p className="text-white/60">@{user.username}</p>
+      </div>
+    </div>
+    <div className="flex gap-10">
+      <div className="text-center">
+        <div className="text-4xl font-black text-orange-500">{user.currentStreak || 0}</div>
+        <div className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">Day Streak 🔥</div>
+      </div>
+      <div className="text-center">
+        <div className="text-4xl font-black text-indigo-400">{user.level || 1}</div>
+        <div className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">Level 🎯</div>
+      </div>
+    </div>
+  </div>
+);
+
+const GamificationUI = ({ user }) => {
+  const xpInCurrentLevel = (user.totalXP || 0) % 100;
+
+  return (
+    <div className="mb-8 space-y-6">
+      {/* XP PROGRESS */}
+      <div className="bg-white/5 p-8 rounded-3xl border border-white/10 shadow-inner relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-8 text-white/5 text-8xl transition-transform group-hover:scale-110 pointer-events-none">✨</div>
+        <div className="flex justify-between items-end mb-4">
+          <div>
+            <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-1">XP Progress</p>
+            <h2 className="text-white text-3xl font-black">Level {user.level || 1}</h2>
+          </div>
+          <div className="text-right">
+            <p className="text-indigo-400 font-black text-xl italic">{xpInCurrentLevel}/100 <span className="text-xs uppercase not-italic">XP</span></p>
+            <p className="text-white/30 text-[9px] font-bold uppercase tracking-tight">{100 - xpInCurrentLevel} XP til next level</p>
+          </div>
+        </div>
+        
+        <div className="h-4 bg-black/20 rounded-full overflow-hidden border border-white/5">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${xpInCurrentLevel}%` }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
+          />
+        </div>
+      </div>
+      
+      {/* BADGES */}
+      {user.badges && user.badges.length > 0 && (
+        <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
+           <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-6 px-1 flex items-center gap-2">
+            <span className="text-lg">🏅</span> Achievements
+           </p>
+           <div className="flex flex-wrap gap-4">
+            {user.badges.map((badge, i) => (
+              <motion.div 
+                key={i} 
+                whileHover={{ scale: 1.05, y: -2 }}
+                className="bg-indigo-900/40 px-5 py-4 rounded-[2rem] border border-indigo-500/20 flex items-center gap-3 shadow-lg"
+              >
+                <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center text-2xl shadow-inner border border-white/5 text-indigo-300">🏅</div>
+                <div className="pr-4">
+                  <h4 className="text-white text-sm font-black tracking-tight">{badge}</h4>
+                  <p className="text-indigo-300/60 text-[8px] font-bold uppercase tracking-widest mt-0.5">Milestone Unlocked</p>
+                </div>
+              </motion.div>
+            ))}
+           </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ChallengesSection = ({ acceptedChallenges, completedPosts, onRequestProof, onDrop, onToggleVisibility, actionLoading }) => {
   const [subTab, setSubTab] = useState("ongoing");
 
   return (
@@ -487,10 +620,28 @@ const ChallengesSection = ({ acceptedChallenges, completedPosts, onRequestProof,
             <div key={post._id} className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
               <div className="flex items-start gap-4">
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-white/90 mb-2">{post.challengeText}</h3>
-                  <p className="text-white/60 text-sm mb-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-lg font-bold text-white/90">{post.challengeText}</h3>
+                    <button
+                      onClick={() => onToggleVisibility(post._id, post.visibility)}
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border ${post.visibility === 'private'
+                        ? 'bg-black/40 text-white border-white/20'
+                        : 'bg-indigo-500/10 text-indigo-400 border-indigo-400/20'
+                        }`}
+                    >
+                      {post.visibility === 'private' ? '🔒 Only Me' : '🌐 Public'}
+                    </button>
+                  </div>
+                  <p className="text-white/60 text-sm mb-3">
                     Completed on {new Date(post.createdAt).toLocaleDateString()}
                   </p>
+                  
+                  {post.description && (
+                    <p className="text-white/80 text-sm italic bg-white/5 p-3 rounded-xl mb-4 border border-white/5">
+                      "{post.description}"
+                    </p>
+                  )}
+
                   {post.proofType === 'image' && (
                     <img
                       src={`http://localhost:5005${post.proofUrl}`}

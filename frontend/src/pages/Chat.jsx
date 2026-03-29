@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import MainSlideBar from "../component/main_SlideBar.jsx";
-import Chat_SlideBar from "../component/chats/chat_SlideBar.jsx";
-import PageLoader from "../component/pagesLoader.jsx";
-import MessageContainer from "../component/chats/messageContainer.jsx";
+import MainSlideBar from "../components/layout/MainSlideBar.jsx";
+import Chat_SlideBar from "../components/features/chats/chat_SlideBar.jsx";
+import PageLoader from "../components/common/loaders/pagesLoader.jsx";
+import MessageContainer from "../components/features/chats/messageContainer.jsx";
 
 const Chat = () => {
     const [step, setStep] = useState(1);

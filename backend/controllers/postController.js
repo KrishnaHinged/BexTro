@@ -4,6 +4,7 @@ import Challenge from "../models/Challenge.js";
 import { Notification } from "../models/Notification.js";
 import { io, getReceiverSocketId } from "../socket/socket.js";
 import multer from "multer";
+import path from "path";
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -22,8 +23,9 @@ export const upload = multer({
 
 export const createPost = async (req, res) => {
     try {
-        const { challengeText, challengeId, proofType, proofUrl, timelineTaken, description } = req.body;
+        const { challengeText, challengeId, proofType, proofUrl, timelineTaken, description, visibility } = req.body;
         const userId = req.userId;
+        let rewards = {};
 
         if (!challengeText || !proofType || !timelineTaken) {
             return res.status(400).json({ message: "Missing required fields: challengeText/proofType/timelineTaken." });
@@ -65,6 +67,7 @@ export const createPost = async (req, res) => {
             proofUrl: finalProofUrl,
             description: description ? description.trim() : "",
             timelineTaken: Number(timelineTaken),
+            visibility: visibility || "public",
         });
 
         // Update user model to reflect completion 
@@ -89,8 +92,70 @@ export const createPost = async (req, res) => {
             }
 
             user.stats.totalCompleted = (user.stats.totalCompleted || 0) + 1;
-            user.score = (user.score || 0) + 10;
+            
+            // --- CORE LOOP 2.0: Gamification ---
+            let xpGained = 25; // Default Medium
+            if (challengeId) {
+                const challenge = await Challenge.findById(challengeId);
+                if (challenge) {
+                    if (challenge.difficulty === "Easy") xpGained = 10;
+                    else if (challenge.difficulty === "Hard") xpGained = 50;
+                }
+            }
+
+            user.totalXP = (user.totalXP || 0) + xpGained;
+            user.score = (user.score || 0) + xpGained; // Map score to XP
+            user.level = Math.floor(user.totalXP / 100);
+
+            // Streak Logic
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (!user.lastActiveDate) {
+                user.currentStreak = 1;
+            } else {
+                const lastActive = new Date(user.lastActiveDate);
+                lastActive.setHours(0, 0, 0, 0);
+                
+                const diffTime = today - lastActive;
+                const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+                if (diffDays === 1) {
+                    user.currentStreak += 1;
+                } else if (diffDays > 1) {
+                    user.currentStreak = 1;
+                }
+                // If diffDays === 0, stays same
+            }
+            
+            user.longestStreak = Math.max(user.longestStreak || 0, user.currentStreak);
+            user.lastActiveDate = new Date();
+
+            // Badge Logic (Simple Milestones)
+            const newBadges = [];
+            if (user.stats.totalCompleted === 1 && !user.badges.includes("First Step")) {
+                newBadges.push("First Step");
+            }
+            if (user.currentStreak === 7 && !user.badges.includes("Week Warrior")) {
+                newBadges.push("Week Warrior");
+            }
+            if (user.stats.totalCompleted === 10 && !user.badges.includes("Consistency King")) {
+                newBadges.push("Consistency King");
+            }
+            
+            if (newBadges.length > 0) {
+                user.badges = [...user.badges, ...newBadges];
+            }
+
             await user.save();
+
+            // Store rewards for Response
+            rewards = {
+                xpGained,
+                currentStreak: user.currentStreak,
+                level: user.level,
+                newBadges
+            };
         }
 
         const populatedPost = await Post.findById(newPost._id).populate("user", "fullName username profilePhoto");
@@ -98,7 +163,11 @@ export const createPost = async (req, res) => {
         // --- REAL-TIME: Broadcast new post ---
         io.emit("newPost", populatedPost);
 
-        return res.status(201).json({ message: "Proof uploaded successfully", post: newPost });
+        return res.status(201).json({ 
+            message: "Proof uploaded successfully", 
+            post: newPost,
+            rewards 
+        });
     } catch (error) {
         console.error("Create Post Error:", error);
         return res.status(500).json({ message: "Server Error" });
@@ -116,18 +185,28 @@ export const getFeed = async (req, res) => {
         let posts = [];
         if (tab === "following") {
             const followingIds = user.following || [];
-            posts = await Post.find({ user: { $in: [...followingIds, userId] } })
+            posts = await Post.find({ 
+                user: { $in: [...followingIds, userId] },
+                $or: [
+                    { visibility: "public" },
+                    { user: userId } // Always show own private posts
+                ]
+            })
                 .sort({ createdAt: -1 })
-                .populate("user", "fullName username profilePhoto following")
+                .populate("user", "fullName username profilePhoto following isPrivate")
                 .limit(50);
         } else {
             // For You Logic: Personalization + Discovery
-            let candidatePosts = await Post.find({})
+            let candidatePosts = await Post.find({
+                $or: [
+                    { visibility: "public" },
+                    { user: userId }
+                ]
+            })
                 .sort({ createdAt: -1 })
-                .populate("user", "fullName username profilePhoto following")
+                .populate("user", "fullName username profilePhoto following isPrivate connections")
                 .limit(200);
 
-            // FALLBACK: If feed is empty or very small, inject personalized challenges as discovery items
             if (candidatePosts.length < 10) {
                 const interests = (user.interests || []).map(i => i.toLowerCase());
                 
@@ -140,6 +219,9 @@ export const getFeed = async (req, res) => {
                 }).limit(20);
 
                 const finalChallenges = challenges.length > 0 ? challenges : await Challenge.find().limit(20);
+                
+                // Get list of users the current user is connected with
+                const connectedUserIds = (user.connections || []).map(id => id.toString());
 
                 const mockPosts = finalChallenges.map(ch => ({
                     _id: ch._id,
@@ -264,6 +346,22 @@ export const getUserPosts = async (req, res) => {
             p.authorConnectionStatus = status;
             delete p.user.following;
             return p;
+        }).filter(post => {
+            if (!post) return false;
+            
+            // Privacy Filtering for Profile View
+            const isOwner = post.user._id.toString() === currentUserId.toString();
+            
+            // 1. "Only Me" posts
+            if (post.visibility === "private" && !isOwner) return false;
+            
+            // 2. Private Account check
+            if (post.user.isPrivate && !isOwner) {
+                const isConnected = (currentUser?.connections || []).some(id => id.toString() === post.user._id.toString());
+                if (!isConnected) return false;
+            }
+            
+            return true;
         });
 
         return res.status(200).json(postsWithStatus);
@@ -360,6 +458,37 @@ export const addComment = async (req, res) => {
         return res.status(200).json({ message: "Comment added", comments: populatedPost.comments });
     } catch (error) {
         console.error("Add Comment Error:", error);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export const updatePostVisibility = async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const { visibility } = req.body;
+        const userId = req.userId;
+
+        if (!["public", "private"].includes(visibility)) {
+            return res.status(400).json({ message: "Invalid visibility value." });
+        }
+
+        const post = await Post.findById(postId);
+        if (!post) return res.status(404).json({ message: "Post not found" });
+
+        // Verify ownership
+        if (post.user.toString() !== userId.toString()) {
+            return res.status(403).json({ message: "Unauthorized to update this post's visibility." });
+        }
+
+        post.visibility = visibility;
+        await post.save();
+
+        // Broadcast update to feed (real-time)
+        io.emit("postUpdate", { postId, visibility, type: "visibility" });
+
+        return res.status(200).json({ message: `Post visibility updated to ${visibility}`, post });
+    } catch (error) {
+        console.error("Update Post Visibility Error:", error);
         return res.status(500).json({ message: "Server Error" });
     }
 };

@@ -14,6 +14,7 @@ import {
     getConnectionRequests,
     getConnections,
     getUserProfileById,
+    searchUsers,
     getAllUsersAdmin,
     deleteUserAdmin,
     updateUserRoleAdmin
@@ -28,6 +29,7 @@ router.post("/register", register);
 
 router.use(isAuthenticated);
 router.get("/profile", getProfile);
+router.get("/search", searchUsers);
 router.get("/profile/:userId", getUserProfileById); // New public profile fetch
 router.put("/profile", updateProfile);
 router.get("/users", getOtherUsers);

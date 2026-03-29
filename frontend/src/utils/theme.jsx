@@ -4,7 +4,7 @@ export const themes = [
 {
 name: "Light",
 // ✨ Soft Instagram-style light background
-background: "linear-gradient(135deg, #c0e4ffff 0%, #b0ccffff 100%)",
+background: "linear-gradient(135deg, #7d6cffff 0%, #78a7ffff 100%)",
 
 
 navbarIcon: <FaMoon size={22} />,
@@ -48,7 +48,7 @@ cardBg: "bg-white/5 backdrop-blur-xl border border-white/10",
 {
 name: "Sunny Sand",
 // ✨ Warm creator vibe (like travel + lifestyle apps)
-background: "linear-gradient(135deg, #ffcc8dff 0%, #fdb28aff 100%)",
+background: "linear-gradient(135deg, #ff5121ff 0%, #ff9440ff 100%)",
 
 
 navbarIcon: <FaRegSun size={22} />,

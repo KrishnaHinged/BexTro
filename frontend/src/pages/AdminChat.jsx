@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import AdminSlideBar from "../component/admin/AdminSlideBar.jsx";
-import Chat_SlideBar from "../component/chats/chat_SlideBar.jsx";
-import MessageContainer from "../component/chats/messageContainer.jsx";
+import AdminSlideBar from "../components/features/admin/AdminSlideBar.jsx";
+import Chat_SlideBar from "../components/features/chats/chat_SlideBar.jsx";
+import MessageContainer from "../components/features/chats/messageContainer.jsx";
 
 const AdminChat = () => {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);

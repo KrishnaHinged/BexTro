@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import MainSlideBar from "../component/main_SlideBar.jsx";
-import PageLoader from "../component/pagesLoader.jsx"; // Import the loader
+import MainSlideBar from "../components/layout/MainSlideBar.jsx";
+import PageLoader from "../components/common/loaders/pagesLoader.jsx"; // Import the loader
 
 const Notifications = () => {
     const [step, setStep] = useState(1);

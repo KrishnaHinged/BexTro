@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import InterestsScreen from "../component/welcome/interestsScreen.jsx";
-import HoldUpMessage from "../component/welcome/HoldUpMessage.jsx";
-import RestartPrompt from "../component/welcome/RestartPrompt.jsx";
+import InterestsScreen from "../components/features/welcome/interestsScreen.jsx";
+import HoldUpMessage from "../components/features/welcome/HoldUpMessage.jsx";
+import RestartPrompt from "../components/features/welcome/RestartPrompt.jsx";
 
 const Welcome = () => {
   const [step, setStep] = useState(1);

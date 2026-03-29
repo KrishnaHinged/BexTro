@@ -3,6 +3,7 @@ import { Message } from "../models/messageModel.js";
 import { User } from "../models/userModel.js";
 import Community from "../models/Community.js";
 import { getReceiverSocketId, io } from "../socket/socket.js";
+import { Notification } from "../models/Notification.js";
 
 // Utility function to check if users can DM
 const canMessageDirectly = async (senderId, receiverId) => {
@@ -11,7 +12,11 @@ const canMessageDirectly = async (senderId, receiverId) => {
     
     if (!sender || !receiver) return false;
 
-    // 1. Mutual Follow Check (BexTro Restriction)
+    // 1. Connection Check (Primary BexTro Architecture)
+    const isConnected = sender.connections && sender.connections.includes(receiverId);
+    if (isConnected) return true;
+
+    // 2. Mutual Follow Check (BexTro Restriction)
     const senderFollowsReceiver = sender.following && sender.following.includes(receiverId);
     const receiverFollowsSender = receiver.following && receiver.following.includes(senderId);
 
@@ -19,7 +24,7 @@ const canMessageDirectly = async (senderId, receiverId) => {
         return true;
     }
 
-    // 2. Are they in the same Community?
+    // 3. Are they in the same Community?
     const sharedCommunity = await Community.findOne({
         members: { $all: [senderId, receiverId] }
     });
@@ -65,12 +70,30 @@ export const sendMessage = async (req, res) => {
 
         await Promise.all([gotConversation.save(), newMessage.save()]);
 
+        // Populate sender before emitting and returning
+        const populatedMessage = await Message.findById(newMessage._id).populate("senderId", "fullName username profilePhoto");
+
         const receiverSocketId = getReceiverSocketId(receiverId);
         if (receiverSocketId) {
-            io.to(receiverSocketId).emit("newMessage", newMessage);
+            io.to(receiverSocketId).emit("newMessage", populatedMessage);
+        }
+
+        // Create notification for new message
+        try {
+            const notification = await Notification.create({
+                sender: senderId,
+                receiver: receiverId,
+                type: "message",
+            });
+            const populatedNotif = await Notification.findById(notification._id).populate("sender", "fullName username profilePhoto");
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit("newNotification", populatedNotif);
+            }
+        } catch (error) {
+            console.error("Error creating chat notification:", error.message);
         }
         
-        return res.status(201).json({ newMessage });
+        return res.status(201).json({ newMessage: populatedMessage });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: "Failed to send message" });
@@ -127,6 +150,36 @@ export const sendCommunityMessage = async (req, res) => {
 
         // Broadcast to community room
         io.to(`community_${communityId}`).emit("newCommunityMessage", populatedMessage);
+
+        // Create notifications for other members
+        try {
+            const otherMembers = community.members.filter(m => m.toString() !== senderId.toString());
+            const notifications = otherMembers.map(memberId => ({
+                sender: senderId,
+                receiver: memberId,
+                type: "communityMessage",
+                community: communityId
+            }));
+            
+            if (notifications.length > 0) {
+                const createdNotifs = await Notification.insertMany(notifications);
+                
+                // Emit to online members
+                for (const memberId of otherMembers) {
+                    const receiverSocketId = getReceiverSocketId(memberId);
+                    if (receiverSocketId) {
+                        // Find the specific notif for this receiver
+                        const myNotif = createdNotifs.find(n => n.receiver.toString() === memberId.toString());
+                        if (myNotif) {
+                            const populatedNotif = await Notification.findById(myNotif._id).populate("sender", "fullName username profilePhoto");
+                            io.to(receiverSocketId).emit("newNotification", populatedNotif);
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error creating community notifications:", error.message);
+        }
 
         return res.status(201).json({ newMessage: populatedMessage });
     } catch (error) {

@@ -1,6 +1,6 @@
 import express from 'express';
 import isAuthenticated from '../middleware/isAuthenticated.js';
-import { createPost, upload, getFeed, getUserPosts, toggleLike, addComment } from '../controllers/postController.js';
+import { createPost, upload, getFeed, getUserPosts, toggleLike, addComment, updatePostVisibility } from '../controllers/postController.js';
 
 const router = express.Router();
 
@@ -18,5 +18,8 @@ router.post("/:postId/like", isAuthenticated, toggleLike);
 
 // Add a comment
 router.post("/:postId/comment", isAuthenticated, addComment);
+
+// Update visibility
+router.put("/:postId/visibility", isAuthenticated, updatePostVisibility);
 
 export default router;

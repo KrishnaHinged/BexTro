@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { logoutUser } from "../../redux/userSlice.js";
-import axiosInstance from "../utils/axiosInstance.js";
-import MainSlideBar from "../component/main_SlideBar.jsx";
-import PageLoader from "../component/pagesLoader.jsx";
-import ProfileTab from "../component/setting_tab/ProfileTab.jsx";
-import InterestsTab from "../component/setting_tab/InterestsTab.jsx";
-import BucketListTab from "../component/setting_tab/BucketListTab.jsx";
-import ChallengesTab from "../component/setting_tab/ChallengesTab.jsx";
+import { logoutUser } from "../redux/userSlice.js";
+import axiosInstance from "../api/axios.js";
+import MainSlideBar from "../components/layout/MainSlideBar.jsx";
+import PageLoader from "../components/common/loaders/pagesLoader.jsx";
+import ProfileTab from "../components/features/setting_tab/ProfileTab.jsx";
+import InterestsTab from "../components/features/setting_tab/InterestsTab.jsx";
+import BucketListTab from "../components/features/setting_tab/BucketListTab.jsx";
+import ChallengesTab from "../components/features/setting_tab/ChallengesTab.jsx";
 
 const Settings = ({ toggleTheme, currentTheme }) => {
   const [step, setStep] = useState(1);

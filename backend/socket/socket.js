@@ -39,22 +39,13 @@ io.on("connection", async (socket) => {
 
   // --- CHAT ENHANCEMENTS ---
 
-  socket.on("sendMessage", (message) => {
-    const { receiverId, senderId, content } = message;
-    const receiverSocketId = getReceiverSocketId(receiverId);
+  // Community Room management
+  socket.on("joinCommunity", (communityId) => {
+    socket.join(`community_${communityId}`);
+  });
 
-    const messageData = {
-      senderId,
-      receiverId,
-      content,
-      isSeen: false,
-      createdAt: new Date(),
-    };
-
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("newMessage", messageData);
-    }
-    io.to(socket.id).emit("newMessage", messageData);
+  socket.on("leaveCommunity", (communityId) => {
+    socket.leave(`community_${communityId}`);
   });
 
   // Typing Indicators

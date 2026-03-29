@@ -21,6 +21,11 @@ const postSchema = new mongoose.Schema(
         timelineTaken: { type: Number, required: true }, // in days
         likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
         comments: [commentSchema],
+        visibility: { 
+            type: String, 
+            enum: ["public", "private"], 
+            default: "public" 
+        },
     },
     { timestamps: true }
 );

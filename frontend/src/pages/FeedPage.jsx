@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import SkeletonCard from '../component/SkeletonCard';
-import axiosInstance from '../utils/axiosInstance';
+import SkeletonCard from '../components/features/posts/SkeletonCard';
+import axiosInstance from '../api/axios';
 import Masonry from 'react-masonry-css';
-import PostCard from '../component/PostCard';
-import ErrorBoundary from '../component/ErrorBoundary';
+import PostCard from '../components/features/posts/PostCard';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 import { useSelector } from 'react-redux';
 import { Navigate } from 'react-router-dom';
-import Navbar from '../component/home/Navbar.jsx';
-import MainSlideBar from "../component/main_SlideBar";
-import PageLoader from "../component/pagesLoader";
+import Navbar from '../components/layout/Navbar.jsx';
+import MainSlideBar from "../components/layout/MainSlideBar";
+import PageLoader from "../components/common/loaders/pagesLoader";
 import { motion, AnimatePresence } from "framer-motion";
+import UserSearchCard from '../components/features/posts/UserSearchCard';
+import { useDebounce } from '../hooks/useDebouncedSearch.js';
 
 const FeedPage = () => {
     const { authUser: user, isAuthenticated } = useSelector(store => store.user);
@@ -17,6 +19,10 @@ const FeedPage = () => {
     const [posts, setPosts] = useState([]);
     const [activeTab, setActiveTab] = useState('foryou');
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [searching, setSearching] = useState(false);
+    const debouncedSearch = useDebounce(searchQuery, 400);
 
     console.log("FeedPage: Rendering, user =", user, "isAuthenticated =", isAuthenticated, "isRehydrated =", isRehydrated);
 
@@ -64,6 +70,25 @@ const FeedPage = () => {
             };
         }
     }, [socket]);
+
+    useEffect(() => {
+        const performSearch = async () => {
+            if (!debouncedSearch.trim()) {
+                setSearchResults([]);
+                return;
+            }
+            setSearching(true);
+            try {
+                const res = await axiosInstance.get(`/user/search?query=${debouncedSearch}`);
+                setSearchResults(res.data || []);
+            } catch (error) {
+                console.error("Search error", error);
+            } finally {
+                setSearching(false);
+            }
+        };
+        performSearch();
+    }, [debouncedSearch]);
 
     useEffect(() => {
         console.log("FeedPage useEffect triggered, user:", user);
@@ -115,10 +140,63 @@ const FeedPage = () => {
                     {/* Background Gradient */}
                     <div className='fixed top-0 left-0 w-full h-full -z-10 bg-gradient-to-br from-indigo-50/40 via-purple-50/30 to-blue-50/40'></div>
 
-                    {/* Header */}
-                    <h1 className="text-3xl md:text-4xl font-bold text-white/80 mb-8">
-                        Community Feed
-                    </h1>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                        <h1 className="text-3xl md:text-4xl font-bold text-white/80">
+                            Community Feed
+                        </h1>
+
+                        {/* Search Bar */}
+                        <div className="relative w-full md:w-96 group">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <span className={searching ? "animate-spin text-indigo-500" : "text-gray-400 group-hover:text-indigo-500 transition-colors"}>
+                                    {searching ? "🔄" : "🔍"}
+                                </span>
+                            </div>
+                            <input 
+                                type="text"
+                                placeholder="Search users by name or username..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full bg-white/40 backdrop-blur-md border border-white/60 hover:bg-white/60 focus:bg-white/80 rounded-2xl py-3.5 pl-12 pr-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/50 shadow-sm transition-all duration-300"
+                            />
+
+                            {/* Search Results Dropdown */}
+                            <AnimatePresence>
+                                {searchQuery && (
+                                    <motion.div 
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        className="absolute left-0 right-0 top-full mt-3 bg-white/90 backdrop-blur-xl border border-white/80 rounded-3xl shadow-2xl z-[100] max-h-[450px] overflow-y-auto p-4 flex flex-col gap-2 no-scrollbar"
+                                    >
+                                        <div className="flex justify-between items-center px-2 mb-2">
+                                            <span className="text-xs font-black uppercase tracking-widest text-indigo-500/70">
+                                                {searching ? "Searching..." : `Results (${searchResults.length})`}
+                                            </span>
+                                            {searchQuery && !searching && (
+                                                <button 
+                                                    onClick={() => setSearchQuery('')}
+                                                    className="text-xs font-bold text-gray-400 hover:text-rose-500 transition-colors"
+                                                >
+                                                    Clear
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {searchResults.length > 0 ? (
+                                            searchResults.map(user => (
+                                                <UserSearchCard key={user._id} user={user} />
+                                            ))
+                                        ) : !searching && (
+                                            <div className="py-8 text-center bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                                                <p className="text-gray-500 font-medium italic">No users found for "{searchQuery}"</p>
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
 
                     {/* Tabs Card (Glass Style like Dashboard cards) */}
                     <div className="backdrop-blur-md rounded-3xl p-6 mb-8 flex flex-col items-center">

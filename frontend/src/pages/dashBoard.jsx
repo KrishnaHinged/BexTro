@@ -2,13 +2,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import MainSlideBar from "../component/main_SlideBar";
-import DailyQuotes from "../component/dashboard_tab/dailyQuotes";
-import Profile from "../component/dashboard_tab/profile";
-import Startup from "../component/dashboard_tab/startup";
-import PageLoader from "../component/pagesLoader";
+import MainSlideBar from "../components/layout/MainSlideBar";
+import DailyQuotes from "../components/features/dashboard_tab/dailyQuotes";
+import Profile from "../components/features/dashboard_tab/profile";
+import Startup from "../components/features/dashboard_tab/startup";
+import PageLoader from "../components/common/loaders/pagesLoader";
 
-const DashBoard = () => {
+const Dashboard = () => {
     const [user, setUser] = useState(null);
     const [step, setStep] = useState(1);
     const [refetchTrigger, setRefetchTrigger] = useState(0);
@@ -73,4 +73,4 @@ const DashBoard = () => {
     );
 };
 
-export default DashBoard;
+export default Dashboard;

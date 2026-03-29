@@ -227,9 +227,9 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import MainSlideBar from '../component/main_SlideBar.jsx';
-import PostCard from '../component/PostCard.jsx';
-import ChallengeCard from '../component/challenge_tab/ChallengeCard.jsx';
+import MainSlideBar from '../components/layout/MainSlideBar.jsx';
+import PostCard from '../components/features/posts/PostCard.jsx';
+import ChallengeCard from '../components/features/challenge_tab/ChallengeCard.jsx';
 import Masonry from 'react-masonry-css';
 import { toast } from 'react-hot-toast';
 
@@ -244,6 +244,7 @@ const [activeTab, setActiveTab] = useState('proofs');
 // UI state
 const [connectionStatus, setConnectionStatus] = useState("none");
 const [isFollowing, setIsFollowing] = useState(false);
+const [shouldHideContent, setShouldHideContent] = useState(false);
 const [followersCount, setFollowersCount] = useState(0);
 
 const fetchUserData = async () => {
@@ -257,6 +258,7 @@ const fetchUserData = async () => {
         setProfileUser(profileRes.data.user);
         setConnectionStatus(profileRes.data.connectionStatus);
         setIsFollowing(profileRes.data.isFollowing);
+        setShouldHideContent(profileRes.data.shouldHideContent);
         setFollowersCount(profileRes.data.followersCount);
         
     } catch (error) {
@@ -390,7 +392,6 @@ return (
                     )}
                 </div>
 
-                {/* Pinterest Style Tabs */}
                 <div className="flex justify-center gap-12 mb-12 border-b border-gray-100 pb-4">
                     <button 
                         className={`font-black text-sm uppercase tracking-widest transition-all pb-2 relative ${activeTab === 'proofs' ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'}`}
@@ -408,43 +409,57 @@ return (
                     </button>
                 </div>
 
-                {/* Pinterest Style Content Grid */}
-                {activeTab === 'proofs' && (
-                    <div>
-                        {posts.length > 0 ? (
-                            <Masonry
-                                breakpointCols={masonryBreakpoints}
-                                className="flex w-auto -ml-4"
-                                columnClassName="pl-4 pb-4"
-                            >
-                                {posts.map(post => <PostCard key={post._id} post={post} currentUser={currentUser} />)}
-                            </Masonry>
-                        ) : (
-                            <div className="text-center py-32 bg-gray-50/50 rounded-[3rem] border-2 border-dashed border-gray-200">
-                                <span className="text-4xl block mb-4">🌑</span>
-                                <p className="text-gray-400 font-black uppercase tracking-widest text-xs">No proofs documented yet</p>
-                            </div>
-                        )}
-                    </div>
-                )}
+                {shouldHideContent ? (
+                  <div className="flex flex-col items-center justify-center py-32 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[3rem] shadow-xl">
+                      <div className="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
+                        <span className="text-5xl">🔒</span>
+                      </div>
+                      <h3 className="text-3xl font-black text-gray-800 mb-2">This Account is Private</h3>
+                      <p className="text-gray-500 font-bold max-w-sm text-center">
+                        Follow or connect with <span className="text-indigo-600">@{profileUser?.username}</span> to see their challenge proofs and shared activity.
+                      </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Pinterest Style Content Grid */}
+                    {activeTab === 'proofs' && (
+                        <div>
+                            {posts.length > 0 ? (
+                                <Masonry
+                                    breakpointCols={masonryBreakpoints}
+                                    className="flex w-auto -ml-4"
+                                    columnClassName="pl-4 pb-4"
+                                >
+                                    {posts.map(post => <PostCard key={post._id} post={post} currentUser={currentUser} />)}
+                                </Masonry>
+                            ) : (
+                                <div className="text-center py-32 bg-gray-50/50 rounded-[3rem] border-2 border-dashed border-gray-200">
+                                    <span className="text-4xl block mb-4">🌑</span>
+                                    <p className="text-gray-400 font-black uppercase tracking-widest text-xs">No proofs documented yet</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
-                {activeTab === 'ongoing' && (
-                    <div>
-                        {profileUser?.acceptedChallenges?.filter(c => c.status === 'active').length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {profileUser.acceptedChallenges.filter(c => c.status === 'active').map((challenge, idx) => (
-                                    <div key={challenge._id || idx} className="opacity-95 transform hover:scale-[1.02] transition-transform">
-                                        <ChallengeCard challenge={challenge} index={idx} onComplete={()=>{}} onAbandon={()=>{}} />
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-32 bg-gray-50/50 rounded-[3rem] border-2 border-dashed border-gray-200">
-                                <span className="text-4xl block mb-4">🌤️</span>
-                                <p className="text-gray-400 font-black uppercase tracking-widest text-xs">No active challenges currently</p>
-                            </div>
-                        )}
-                    </div>
+                    {activeTab === 'ongoing' && (
+                        <div>
+                            {profileUser?.acceptedChallenges?.filter(c => c.status === 'active').length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {profileUser.acceptedChallenges.filter(c => c.status === 'active').map((challenge, idx) => (
+                                        <div key={challenge._id || idx} className="opacity-95 transform hover:scale-[1.02] transition-transform">
+                                            <ChallengeCard challenge={challenge} index={idx} onComplete={()=>{}} onAbandon={()=>{}} />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-32 bg-gray-50/50 rounded-[3rem] border-2 border-dashed border-gray-200">
+                                    <span className="text-4xl block mb-4">🌤️</span>
+                                    <p className="text-gray-400 font-black uppercase tracking-widest text-xs">No active challenges currently</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                  </>
                 )}
             </div>
         </div>

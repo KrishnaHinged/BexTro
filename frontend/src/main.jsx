@@ -4,7 +4,7 @@ import "./index.css";
 import App from "./App.jsx";
 import { Toaster } from "react-hot-toast";
 import { Provider } from "react-redux";
-import { store, persistor } from "../redux/store.js"; // Updated import
+import { store, persistor } from "./redux/store.js";
 import { PersistGate } from "redux-persist/integration/react";
 
 createRoot(document.getElementById("root")).render(

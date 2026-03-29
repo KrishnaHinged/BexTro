@@ -5,13 +5,15 @@ import gsap from "gsap";
 import Confetti from "react-confetti";
 import { motion } from "framer-motion";
 import io from "socket.io-client";
-import Sign_in from "./pages/Sign_in";
-import Sign_up from "./pages/Sign_up";
+
+// Pages
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
 import Chats from "./pages/Chat";
 import AdminChat from "./pages/AdminChat.jsx";
-import Welcome from "./pages/welcome";
-import IntroToChallenges from "./pages/intro_to_Challenges";
-import DashBoard from "./pages/dashBoard";
+import Welcome from "./pages/Welcome";
+import IntroToChallenges from "./pages/IntroToChallenges";
+import Dashboard from "./pages/Dashboard";
 import Notifications from "./pages/Notifications";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
@@ -20,22 +22,31 @@ import FeedPage from "./pages/FeedPage";
 import UserProfile from "./pages/UserProfile";
 import Community from "./pages/Community";
 
-import { setSocket } from "../redux/socketSlice";
-import { setOnlineUser } from "../redux/userSlice";
-import { themes } from "./utils/theme";
-import { ROOT_URL } from "./utils/axiosInstance";
+// Redux
+import { setSocket } from "./redux/socketSlice";
+import { setOnlineUser } from "./redux/userSlice";
 
-import UserExperience from "./component/home/userExperience";
-import Navbar from "./component/home/Navbar.jsx";
-import IntroContainer from "./component/home/Intro_Container";
-import Loader from "./component/home/Loader";
-import Reviews from "./component/home/Reviews";
-import Services from "./component/home/Services";
-import Footer from "./component/home/Footer";
-import Loader_2 from "./component/home/Loader2";
-import DailyQuotes from "./component/dashboard_tab/dailyQuotes";
-import FadeInWhenVisible from "./component/common/FadeInWhenVisible";
+// Utils
+import axiosInstance from "./api/axios";
+import { ROOT_URL } from "./api/axios";
+
+// Components - Layout
+import Navbar from "./components/layout/Navbar.jsx";
+import Footer from "./components/layout/Footer";
+
+// Components - Features
+import UserExperience from "./components/features/home/userExperience";
+import IntroContainer from "./components/features/home/Intro_Container";
+import Reviews from "./components/features/home/Reviews";
+import Services from "./components/features/home/Services";
+
+// Components - Common
+import Loader from "./components/common/loaders/Loader";
+import Loader_2 from "./components/common/loaders/Loader2";
+import FadeInWhenVisible from "./components/common/FadeInWhenVisible";
+
 import { toast } from "react-hot-toast";
+import { themes } from "./utils/theme";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -118,7 +129,11 @@ const App = () => {
           ? `${notification.sender.username} followed you!` 
           : notification.type === "like" 
           ? `${notification.sender.username} liked your post!` 
-          : `${notification.sender.username} commented on your post!`;
+          : notification.type === "comment"
+          ? `${notification.sender.username} commented on your post!`
+          : notification.type === "message"
+          ? `New message from ${notification.sender.username}!`
+          : `New post in community from ${notification.sender.username}!`;
         
         toast.success(message, {
           icon: '🔔',
@@ -240,12 +255,22 @@ const App = () => {
                   <FadeInWhenVisible><Footer /></FadeInWhenVisible>
                 </>
               ) : (
-                <DashBoard />
+                <Dashboard />
               )
             }
           />
-          <Route path="/signin" element={<Sign_in />} />
-          <Route path="/signup" element={<Sign_up />} />
+          <Route
+            path="/signin"
+            element={
+              <SignIn toggleTheme={toggleTheme} currentTheme={themes[currentThemeIndex]} />
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <SignUp toggleTheme={toggleTheme} currentTheme={themes[currentThemeIndex]} />
+            }
+          />
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           <Route
             path="/profile"
@@ -277,7 +302,7 @@ const App = () => {
           />
           <Route path="/welcome" element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
           <Route path="/set_challenges" element={<ProtectedRoute><IntroToChallenges /></ProtectedRoute>} />
-          <Route path="/dashboard" element={<ProtectedRoute><DashBoard /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route
             path="/admindashboard"
             element={

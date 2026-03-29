@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import MainSlideBar from "../component/main_SlideBar.jsx";
-import PageLoader from "../component/pagesLoader.jsx";
-import Chat_SlideBar from "../component/chats/chat_SlideBar.jsx";
-import MessageContainer from "../component/chats/messageContainer.jsx";
-import ErrorBoundary from "../component/ErrorBoundary";
+import MainSlideBar from "../components/layout/MainSlideBar.jsx";
+import PageLoader from "../components/common/loaders/pagesLoader.jsx";
+import Chat_SlideBar from "../components/features/chats/chat_SlideBar.jsx";
+import MessageContainer from "../components/features/chats/messageContainer.jsx";
+import ErrorBoundary from "../components/common/ErrorBoundary";
 
 const Community = () => {
     const [communities, setCommunities] = useState([]);

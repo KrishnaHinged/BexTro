@@ -199,11 +199,24 @@ export const getUserProfileById = async (req, res) => {
         }
 
         const isFollowing = user.followers.includes(currentUserId);
+        const isConnected = user.connections.includes(currentUserId);
+
+        // Privacy Logic: If account is private and not connected/self, hide posts
+        const isSelf = currentUserId && currentUserId.toString() === userId.toString();
+        const shouldHideContent = user.isPrivate && !isConnected && !isSelf;
 
         return res.status(200).json({
-            user,
+            user: shouldHideContent ? { 
+                _id: user._id, 
+                username: user.username, 
+                fullName: user.fullName, 
+                profilePhoto: user.profilePhoto,
+                isPrivate: true 
+            } : user,
             connectionStatus,
             isFollowing,
+            isConnected,
+            shouldHideContent,
             followersCount: user.followers.length,
             followingCount: user.following.length
         });
@@ -225,7 +238,7 @@ export const updateProfile = async (req, res) => {
                 return res.status(401).json({ message: "Unauthorized access" });
             }
 
-            const { fullName, username, score } = req.body;
+            const { fullName, username, score, isPrivate } = req.body;
 
             if (!fullName || !username) {
                 return res.status(400).json({ message: "Full name and username are required" });
@@ -246,6 +259,9 @@ export const updateProfile = async (req, res) => {
             }
             if (score !== undefined) {
                 updateData.score = Number(score);
+            }
+            if (isPrivate !== undefined) {
+                updateData.isPrivate = isPrivate === "true" || isPrivate === true;
             }
 
             const updatedUser = await User.findByIdAndUpdate(
@@ -507,6 +523,47 @@ export const getConnections = async (req, res) => {
         return res.status(200).json(connections);
     } catch (error) {
         console.error("Get Connections Error:", error);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export const searchUsers = async (req, res) => {
+    try {
+        const { query } = req.query;
+        const userId = req.userId;
+
+        if (!query) return res.status(200).json([]);
+
+        const searchRegex = new RegExp(query, "i");
+        const users = await User.find({
+            $and: [
+                { _id: { $ne: userId } },
+                {
+                    $or: [
+                        { username: searchRegex },
+                        { fullName: searchRegex }
+                    ]
+                }
+            ]
+        }).select("fullName username profilePhoto connections followers isPrivate")
+        .limit(20);
+
+        const usersWithConnectionStatus = users.map(user => {
+            const u = user.toObject();
+            let status = "none";
+            
+            const currentUser = req.userId; // Already available from middleware
+            if (u.connections.some(id => id.toString() === userId.toString())) {
+                status = "connected";
+            }
+            
+            u.connectionStatus = status;
+            return u;
+        });
+
+        return res.status(200).json(usersWithConnectionStatus);
+    } catch (error) {
+        console.error("Search Users Error:", error);
         return res.status(500).json({ message: "Server Error" });
     }
 };

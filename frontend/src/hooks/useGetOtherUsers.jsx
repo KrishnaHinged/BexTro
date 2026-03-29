@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
-import { setOtherUser } from '../../redux/userSlice'; 
+import { setOtherUser } from "../redux/userSlice"; 
+import { ROOT_URL } from "../api/axios";
 
 const useGetOtherUsers = () => {
   const dispatch = useDispatch();
@@ -20,8 +21,8 @@ const useGetOtherUsers = () => {
       try {
         axios.defaults.withCredentials = true;
         const [userRes, commRes] = await Promise.all([
-          axios.get('http://localhost:5005/api/v1/user/users', { signal: controller.signal }),
-          axios.get('http://localhost:5005/api/v1/communities/my-communities', { signal: controller.signal })
+          axios.get(`${ROOT_URL}/api/v1/user/users`, { signal: controller.signal }),
+          axios.get(`${ROOT_URL}/api/v1/communities/my-communities`, { signal: controller.signal })
         ]);
 
         const communityList = commRes.data.map(c => ({
