@@ -27,7 +27,7 @@ cardBg: "bg-white/70 backdrop-blur-xl border border-gray-200",
 {
 name: "Dark",
 // ✨ Deep premium dark (not harsh)
-background: "linear-gradient(135deg, #0f172a 0%, #020617 100%)",
+background: "linear-gradient(135deg, #0D1525 0%, #020617 100%)",
 navbarIcon: <FaFire size={22} />,
 
 adminBackground: "rgba(15, 23, 42, 0.8)",

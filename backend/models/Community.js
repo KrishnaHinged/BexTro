@@ -13,6 +13,8 @@ const communitySchema = new mongoose.Schema(
         tags: [{ type: String }],
         
         coverColor: { type: String, default: "from-indigo-500 to-purple-600" }, // For frontend gradients
+        profilePhoto: { type: String, default: "" }, // Community profile photo path
+
     },
     { timestamps: true }
 );

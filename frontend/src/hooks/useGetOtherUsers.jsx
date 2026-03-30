@@ -29,7 +29,9 @@ const useGetOtherUsers = () => {
             _id: c._id,
             fullName: c.name,
             username: `${c.memberCount} Members`,
-            profilePhoto: `https://avatar.iran.liara.run/public/job/designer?username=${c.name}`,
+            profilePhoto: c.profilePhoto
+                ? `${ROOT_URL}${c.profilePhoto}`
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=6366f1&color=fff`,
             isCommunity: true
         }));
 

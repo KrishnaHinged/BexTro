@@ -19,6 +19,8 @@ const Community = () => {
     const [showCreate, setShowCreate] = useState(false);
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
+    const [photoFile, setPhotoFile] = useState(null);
+    const [photoPreview, setPhotoPreview] = useState("");
 
     const fetchCommunities = async () => {
         setLoading(true);
@@ -54,12 +56,25 @@ const Community = () => {
     const handleCreate = async (e) => {
         e.preventDefault();
         try {
-            await axios.post("http://localhost:5005/api/v1/communities/create", { name, description }, { withCredentials: true });
+            const formData = new FormData();
+            formData.append("name", name);
+            formData.append("description", description);
+            if (photoFile) formData.append("profilePhoto", photoFile);
+
+            await axios.post(
+                "http://localhost:5005/api/v1/communities/create",
+                formData,
+                { withCredentials: true, headers: { "Content-Type": "multipart/form-data" } }
+            );
             setShowCreate(false);
+            setName("");
+            setDescription("");
+            setPhotoFile(null);
+            setPhotoPreview("");
             fetchCommunities();
         } catch (error) {
             console.error(error);
-            alert("Failed to create community");
+            alert(error.response?.data?.message || "Failed to create community");
         }
     };
 
@@ -127,6 +142,7 @@ const Community = () => {
                             communities={communities}
                             myCommunities={myCommunities}
                             onJoin={handleJoin}
+                            onOpenChat={() => setActiveTab('chats')}
                         />
                     ) : (
                         <ChatsSection 
@@ -142,6 +158,45 @@ const Community = () => {
                         <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative">
                             <h2 className="text-2xl font-extrabold text-indigo-900 mb-6">Create Community</h2>
                             <form onSubmit={handleCreate} className="flex flex-col gap-4">
+
+                                {/* Community Photo */}
+                                <div>
+                                    <label className="text-gray-700 font-bold text-sm mb-2 block">Community Photo <span className="text-gray-400 font-normal">(optional)</span></label>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-20 h-20 rounded-2xl bg-indigo-50 border-2 border-dashed border-indigo-200 flex items-center justify-center overflow-hidden shrink-0">
+                                            {photoPreview ? (
+                                                <img src={photoPreview} alt="preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-3xl">📷</span>
+                                            )}
+                                        </div>
+                                        <div className="flex-1">
+                                            <input
+                                                type="file"
+                                                accept="image/jpeg,image/jpg,image/png,image/webp"
+                                                id="communityPhoto"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const file = e.target.files[0];
+                                                    if (file) {
+                                                        setPhotoFile(file);
+                                                        setPhotoPreview(URL.createObjectURL(file));
+                                                    }
+                                                }}
+                                            />
+                                            <label
+                                                htmlFor="communityPhoto"
+                                                className="cursor-pointer inline-block bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold text-sm px-4 py-2 rounded-xl border border-indigo-200 transition-all"
+                                            >
+                                                {photoFile ? "Change Photo" : "Upload Photo"}
+                                            </label>
+                                            {photoFile && (
+                                                <p className="text-xs text-gray-400 mt-1 truncate max-w-[180px]">{photoFile.name}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div>
                                     <label className="text-gray-700 font-bold text-sm mb-2 block">Community Name</label>
                                     <input required value={name} onChange={e=>setName(e.target.value)} className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500" placeholder="E.g. Code Masters" />
@@ -150,8 +205,8 @@ const Community = () => {
                                     <label className="text-gray-700 font-bold text-sm mb-2 block">Description</label>
                                     <textarea required value={description} onChange={e=>setDescription(e.target.value)} className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500" rows="3" placeholder="What's this group about?" />
                                 </div>
-                                <div className="flex gap-4 mt-6">
-                                    <button type="button" onClick={() => setShowCreate(false)} className="flex-1 px-4 py-3 bg-gray-100 font-bold text-gray-700 rounded-xl">Cancel</button>
+                                <div className="flex gap-4 mt-2">
+                                    <button type="button" onClick={() => { setShowCreate(false); setPhotoFile(null); setPhotoPreview(""); }} className="flex-1 px-4 py-3 bg-gray-100 font-bold text-gray-700 rounded-xl">Cancel</button>
                                     <button type="submit" className="flex-1 px-4 py-3 bg-indigo-600 font-bold text-white rounded-xl shadow-lg hover:bg-indigo-700">Create</button>
                                 </div>
                             </form>
@@ -163,7 +218,7 @@ const Community = () => {
     );
 };
 
-const CommunitiesSection = ({ communities, myCommunities, onJoin }) => {
+const CommunitiesSection = ({ communities, myCommunities, onJoin, onOpenChat }) => {
     const [activeSubTab, setActiveSubTab] = useState("explore");
     const displayList = activeSubTab === "explore" ? communities : myCommunities;
 
@@ -189,8 +244,15 @@ const CommunitiesSection = ({ communities, myCommunities, onJoin }) => {
                     {displayList.map(c => (
                         <div key={c._id} className="group bg-white/10 backdrop-blur-md p-1 rounded-3xl shadow-lg border border-white/20 hover:border-indigo-500/50 hover:shadow-indigo-500/10 transition-all duration-500 transform hover:-translate-y-2">
                             <div className="p-5">
-                                <div className={`h-32 rounded-2xl bg-gradient-to-br ${c.coverColor || 'from-indigo-500 to-purple-600'} mb-5 flex items-end p-5 shadow-inner overflow-hidden relative`}>
-                                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500"></div>
+                                <div className={`h-32 rounded-2xl mb-5 flex items-end p-5 shadow-inner overflow-hidden relative ${!c.profilePhoto ? `bg-gradient-to-br ${c.coverColor || 'from-indigo-500 to-purple-600'}` : ''}`}>
+                                    {c.profilePhoto && (
+                                        <img
+                                            src={`http://localhost:5005${c.profilePhoto}`}
+                                            alt={c.name}
+                                            className="absolute inset-0 w-full h-full object-cover"
+                                        />
+                                    )}
+                                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors duration-500"></div>
                                     <h3 className="text-2xl font-bold text-white drop-shadow-xl z-10">{c.name}</h3>
                                 </div>
                                 <p className="text-white/70 text-sm mb-6 line-clamp-2 min-h-[3rem] leading-relaxed">{c.description}</p>
@@ -211,9 +273,12 @@ const CommunitiesSection = ({ communities, myCommunities, onJoin }) => {
                                             Join
                                         </button>
                                     ) : (
-                                        <Link to={`/chats?community=${c._id}`} className="flex items-center gap-2 text-indigo-300 hover:text-white font-bold text-sm bg-white/5 hover:bg-indigo-500 px-4 py-2.5 rounded-xl transition-all group/btn">
+                                        <div
+                                            onClick={onOpenChat}
+                                            className="cursor-pointer flex items-center gap-2 text-indigo-300 hover:text-white font-bold text-sm bg-white/5 hover:bg-indigo-500 px-4 py-2.5 rounded-xl transition-all group/btn"
+                                        >
                                             Open Chat <span className="group-hover/btn:translate-x-1 transition-transform">→</span>
-                                        </Link>
+                                        </div>
                                     )}
                                 </div>
                             </div>

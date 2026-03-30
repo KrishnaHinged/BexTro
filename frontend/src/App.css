@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 .custom-gradient {
     background: linear-gradient(85deg, #8ec5fc 0%, #e0c3fc 100%);
 }
@@ -46,3 +47,14 @@
     }
 }
 
+
+
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

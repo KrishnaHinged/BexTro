@@ -33,7 +33,6 @@ const MessageContainer = () => {
                 socket.emit("leaveCommunity", selectedUser._id);
             }
             socket.off("typingStatus");
-            dispatch(setSelectedUser(null));
         };
     }
   }, [dispatch, socket, selectedUser, authUser?._id]);

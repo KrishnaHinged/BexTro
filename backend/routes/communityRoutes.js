@@ -1,12 +1,34 @@
 import express from "express";
+import path from "path";
+import multer from "multer";
 import Community from "../models/Community.js";
 import { User } from "../models/userModel.js";
 import isAuthenticated from "../middleware/isAuthenticated.js";
 
 const router = express.Router();
 
+// Multer setup for community profile photos
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, "uploads/"),
+    filename: (req, file, cb) => cb(null, `community-${Date.now()}${path.extname(file.originalname).toLowerCase()}`),
+});
+const fileFilter = (req, file, cb) => {
+    const allowed = /jpeg|jpg|png|webp/;
+    if (allowed.test(path.extname(file.originalname).toLowerCase()) && allowed.test(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error("Only image files (jpeg, jpg, png, webp) are allowed"), false);
+    }
+};
+const uploadCommunityPhoto = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter }).single("profilePhoto");
+
 // 1. Create a Public Community
-router.post("/create", isAuthenticated, async (req, res) => {
+router.post("/create", isAuthenticated, (req, res, next) => {
+    uploadCommunityPhoto(req, res, (err) => {
+        if (err) return res.status(400).json({ message: err.message });
+        next();
+    });
+}, async (req, res) => {
     try {
         const { name, description, tags, coverColor } = req.body;
         const userId = req.userId;
@@ -20,6 +42,8 @@ router.post("/create", isAuthenticated, async (req, res) => {
             return res.status(400).json({ message: "A community with this name already exists" });
         }
 
+        const profilePhoto = req.file ? `/uploads/${req.file.filename}` : "";
+
         const newCommunity = await Community.create({
             name,
             description,
@@ -27,7 +51,8 @@ router.post("/create", isAuthenticated, async (req, res) => {
             admins: [userId],
             members: [userId],
             tags: tags || [],
-            coverColor: coverColor || "from-indigo-500 to-purple-600"
+            coverColor: coverColor || "from-indigo-500 to-purple-600",
+            profilePhoto,
         });
 
         res.status(201).json({ message: "Community created!", community: newCommunity });
@@ -36,6 +61,7 @@ router.post("/create", isAuthenticated, async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 });
+
 
 // 2. Explore Public Communities (Discovery)
 router.get("/explore", isAuthenticated, async (req, res) => {
