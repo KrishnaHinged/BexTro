@@ -9,7 +9,7 @@ const Navbar = ({ toggleTheme, currentTheme }) => {
   };
 
   return (
-    <div className="h-16 px-3 sm:px-5 text-gray-900 flex items-center justify-between font-serif py-6 sm:py-10">
+    <div className="h-16 px-3 sm:px-5 text-gray-900 flex items-center justify-between py-6 sm:py-10">
       <h2>
         <img
           src="/main_logo.svg"
@@ -46,7 +46,7 @@ const Navbar = ({ toggleTheme, currentTheme }) => {
       {/* Right Section */}
       <div className="hidden sm:flex items-center gap-3 sm:gap-4">
         <div
-          className="bg-white/85 p-1.5 sm:p-2 rounded-full border border-white cursor-pointer"
+          className=" p-1.5 sm:p-2 rounded-full  cursor-pointer"
           onClick={toggleTheme || (() => {})}
         >
           {typeof currentTheme?.navbarIcon === "string" ? (

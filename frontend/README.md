@@ -9,8 +9,10 @@ you take on challenges, complete them, and prove it.
 
 What Bextro Does:
 
-You create an account, set your goals, and define what you want to become.
+<!-- You create an account, set your goals, and define what you want to become. -->
+helps users achieve their goals by providing a platform to track their progress and stay motivated.
 
+You create an account, set your goals, and define what you want to become.
 Based on that, Bextro generates challenges for you.
 These can be daily, weekly, or monthly — depending on your direction.
 
@@ -37,6 +39,7 @@ Core Flow
 
 You keep repeating this loop.
 
+Activation [aaha moment]
 ---
 
 System Features:
@@ -71,9 +74,8 @@ Bextro also has a community layer.
 
 But here’s the difference:
 
-People don’t see who you are.
-They see what you do.
-
+[People don’t see who you are.
+They see what you do.]
 Your actions, your challenges, your consistency — that’s your identity.
 
 ---
@@ -93,7 +95,7 @@ It’s a "progress portfolio of your life".
 
 Philosophy:
 
-You vs You.
+You vs You.[do it for your future self]
 
 Every post is a step forward.
 Every challenge is a move closer.
@@ -104,8 +106,8 @@ Just progress.
 ----------------------------
 Privacy:
 
-Privacy is important.
-They can’t ruin what they don’t know.
+[Privacy is important.
+They can’t ruin what they don’t know.]
 
 Bextro is built in a way where you stay in control of what you share.
 
@@ -154,6 +156,7 @@ Or share your journey when you’re ready.
 
 Philosophy:
 
-Move in silence.
-Let your progress speak.
+[Move in silence.
+Let your progress speak.]
 
+[a progress portfolio of life.]

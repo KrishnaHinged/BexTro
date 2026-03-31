@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
+import { Trophy, Zap, Leaf, Baby, Flame, Rocket } from "lucide-react";
 
 const Score = () => {
     const [score, setScore] = useState(0);
@@ -10,7 +11,6 @@ const Score = () => {
     const pointsPerLevel = 100;
     const maxScore = 500;
     const scoreRef = useRef(null);
-    const confettiRef = useRef(null);
 
     // Fetch User Score
     useEffect(() => {
@@ -24,7 +24,7 @@ const Score = () => {
                     setScore(newScore);
                     const newLevel = Math.floor(newScore / pointsPerLevel) + 1;
                     setLevel(newLevel);
-                    
+
                     if (newLevel > level) {
                         triggerCelebration();
                     }
@@ -37,7 +37,7 @@ const Score = () => {
         fetchScore();
     }, []);
 
-    // Animate Score with GSAP (keeping this since it's separate from Framer Motion)
+    // Animate Score with GSAP
     useEffect(() => {
         if (scoreRef.current) {
             gsap.fromTo(
@@ -46,7 +46,7 @@ const Score = () => {
                 {
                     innerText: score,
                     duration: 1.2,
-                    ease: "power2.out", // Changed from elastic.out
+                    ease: "power2.out",
                     snap: { innerText: 1 },
                     onUpdate: function () {
                         scoreRef.current.innerText = Math.floor(this.targets()[0].innerText);
@@ -62,27 +62,31 @@ const Score = () => {
     };
 
     const getLevelBadge = () => {
-        if (level >= 10) return { 
-            label: "Legend 🏆", 
+        if (level >= 10) return {
+            label: "Legend",
             color: "bg-gradient-to-br from-yellow-300 to-amber-500",
             glow: "shadow-[0_0_20px_rgba(234,179,8,0.6)]",
-            emoji: "🔥"
+            Icon: Trophy,
+            CelebrationIcon: Flame,
         };
-        if (level >= 5) return { 
-            label: "Pro ⚡", 
+        if (level >= 5) return {
+            label: "Pro",
             color: "bg-gradient-to-br from-blue-400 to-indigo-600",
             glow: "shadow-[0_0_15px_rgba(96,165,250,0.5)]",
-            emoji: "🚀"
+            Icon: Zap,
+            CelebrationIcon: Rocket,
         };
-        return { 
-            label: "Newbie🌱", 
+        return {
+            label: "Newbie",
             color: "bg-gradient-to-br from-green-400 to-emerald-600",
             glow: "shadow-[0_0_10px_rgba(74,222,128,0.4)]",
-            emoji: "👶"
+            Icon: Leaf,
+            CelebrationIcon: Baby,
         };
     };
 
     const badge = getLevelBadge();
+    const { Icon, CelebrationIcon } = badge;
     const pointsToNextLevel = pointsPerLevel - (score % pointsPerLevel);
     const progressPercentage = Math.min((score / maxScore) * 100, 100);
 
@@ -90,8 +94,8 @@ const Score = () => {
         <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }} // Back-out ease
-            className="p-6 bg-gray-900/80  rounded-2xl border border-gray-900 shadow-2xl relative overflow-hidden max-w-md mx-auto"
+            transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+            className="p-6 bg-gray-900/80 rounded-2xl border border-gray-900 shadow-2xl relative overflow-hidden max-w-md mx-auto"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
         >
@@ -104,20 +108,14 @@ const Score = () => {
                     transition={{ type: "spring", stiffness: 300 }}
                     className={`w-16 h-16 rounded-full ${badge.color} ${badge.glow} flex items-center justify-center mr-4`}
                 >
-                    <span className="text-2xl">{badge.emoji}</span>
+                    <Icon size={28} color="white" strokeWidth={1.8} />
                 </motion.div>
                 <div>
                     <p className="text-xs text-gray-400 mb-1">LEVEL</p>
-                    <motion.h2 
+                    <motion.h2
                         className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500"
-                        animate={{ 
-                            scale: [1, 1.05, 1],
-                        }}
-                        transition={{ 
-                            duration: 2, 
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                        }}
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                     >
                         {badge.label}
                     </motion.h2>
@@ -134,7 +132,7 @@ const Score = () => {
                 >
                     {score}
                 </motion.p>
-                <motion.p 
+                <motion.p
                     className="text-sm text-gray-400"
                     animate={{ opacity: [0.6, 1, 0.6] }}
                     transition={{ duration: 3, repeat: Infinity }}
@@ -150,10 +148,7 @@ const Score = () => {
                         className={`h-full rounded-full ${badge.color}`}
                         initial={{ width: 0 }}
                         animate={{ width: `${progressPercentage}%` }}
-                        transition={{ 
-                            duration: 1.5, 
-                            ease: [0.6, 0.01, 0.05, 0.95] // Elastic ease
-                        }}
+                        transition={{ duration: 1.5, ease: [0.6, 0.01, 0.05, 0.95] }}
                     />
                 </div>
                 <div className="flex justify-between text-xs text-gray-400">
@@ -177,8 +172,8 @@ const Score = () => {
                                     background: ["#f43f5e", "#3b82f6", "#f59e0b", "#10b981"][Math.floor(Math.random() * 4)],
                                 }}
                                 initial={{ y: 0, opacity: 1, rotate: 0 }}
-                                animate={{ 
-                                    y: -500, 
+                                animate={{
+                                    y: -500,
                                     opacity: 0,
                                     rotate: 360,
                                     x: Math.random() > 0.5 ? 50 : -50,
@@ -190,16 +185,16 @@ const Score = () => {
                                 }}
                             />
                         ))}
-                        
-                        {/* Trophy */}
+
+                        {/* Trophy Icon */}
                         <motion.div
-                            className="absolute -top-8 -right-8 text-4xl"
+                            className="absolute -top-8 -right-8"
                             initial={{ scale: 0, rotate: -30 }}
                             animate={{ scale: 1, rotate: [0, 25, -25, 0], y: [0, -20, 0] }}
                             exit={{ scale: 0 }}
                             transition={{ duration: 1.5 }}
                         >
-                            🏆
+                            <CelebrationIcon size={36} color="#facc15" strokeWidth={1.5} />
                         </motion.div>
                     </>
                 )}

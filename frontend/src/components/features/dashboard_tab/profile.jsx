@@ -47,13 +47,13 @@ const Profile = ({ refetchTrigger }) => {
         >
             <motion.div 
                 whileHover={{ scale: 1.05 }}
-                className="relative mx-auto w-32 h-32 mb-4"
+                className="relative mx-auto w-30 h-30 mb-4"
             >
                 <img
                     src={profilePhotoUrl}
                     alt="Profile"
                     onError={(e) => (e.target.src = "https://avatars.dicebear.com/api/initials/User.svg")}
-                    className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
+                    className="w-full h-full object-cover rounded-full border-4 border-white shadow-lg"
                 />
             </motion.div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">

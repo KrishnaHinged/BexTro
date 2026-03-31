@@ -12,14 +12,14 @@ const IntroContainer = () => {
                     <p className="text-sm sm:text-base md:text-lg text-gray-900 font-sans mt-3 sm:mt-4 md:mt-5 mb-8 sm:mb-12 md:mb-26">
                         Break big dreams into small steps, track your journey, and stay on the path to success
                     </p>
-                    <div>
+                    {/* <div>
                         <Link
                             to="/signup"
                             className=" text-gray-900 px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base rounded-xl sm:rounded-2xl hover:bg-black hover:text-white hover:cursor-pointer border border-white inline-block"
                         >
                             Get Started
                         </Link>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>
